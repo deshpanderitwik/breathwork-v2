@@ -1,0 +1,14 @@
+{
+  "name": "@breathe/web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'Phase 2: scaffold Vite app here.' && exit 0",
+    "build": "echo 'Phase 2: scaffold Vite app here.' && exit 0",
+    "test": "echo 'Phase 2' && exit 0"
+  },
+  "dependencies": {
+    "@breathe/core": "workspace:*"
+  }
+}
