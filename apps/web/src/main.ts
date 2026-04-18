@@ -1,24 +1,12 @@
 import {
-  DEFAULT_PRESET,
   PRESETS,
   createSession,
-  type PresetId,
   type Session,
   type SessionConfig,
   type SessionEvent,
   type ToneSet,
 } from "@breathe/core";
 import createWebAudioToneSet from "./audio/web-audio-tone-set.js";
-
-type PresetChoice = PresetId | "custom";
-
-const PRESET_ORDER: PresetChoice[] = ["calm", "focus", "deep", "custom"];
-const PRESET_LABELS: Record<PresetChoice, string> = {
-  calm: "Calm",
-  focus: "Focus",
-  deep: "Deep",
-  custom: "Custom",
-};
 
 interface FieldSpec {
   key: keyof SessionConfig;
@@ -35,6 +23,45 @@ const FIELDS: FieldSpec[] = [
   { key: "rounds", label: "Rounds", unit: "", step: 1 },
 ];
 
+const STORAGE_KEY = "breathe.session-config.v1";
+
+// ---------------------------------------------------------------------------
+// Persisted state
+// ---------------------------------------------------------------------------
+
+function loadConfig(): SessionConfig {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { ...PRESETS.calm };
+    const parsed = JSON.parse(raw) as Partial<SessionConfig>;
+    // Accept only if every field is a positive finite number; otherwise fall back.
+    const needed: Array<keyof SessionConfig> = [
+      "inhaleSec",
+      "exhaleSec",
+      "activeSec",
+      "restSec",
+      "rounds",
+    ];
+    for (const key of needed) {
+      const v = parsed[key];
+      if (typeof v !== "number" || !Number.isFinite(v) || v <= 0) {
+        return { ...PRESETS.calm };
+      }
+    }
+    return parsed as SessionConfig;
+  } catch {
+    return { ...PRESETS.calm };
+  }
+}
+
+function saveConfig(c: SessionConfig): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(c));
+  } catch {
+    // Storage disabled or full — fail silently, just won't persist.
+  }
+}
+
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
@@ -42,8 +69,7 @@ const FIELDS: FieldSpec[] = [
 type View = "setup" | "session";
 
 let view: View = "setup";
-let activeChoice: PresetChoice = DEFAULT_PRESET;
-let config: SessionConfig = { ...PRESETS[DEFAULT_PRESET] };
+let config: SessionConfig = loadConfig();
 
 // In-session state
 let session: Session | null = null;
@@ -62,22 +88,6 @@ function formatDuration(totalSec: number): string {
   const sec = totalSec % 60;
   if (sec === 0) return `${min} min`;
   return `${min} min ${sec} sec`;
-}
-
-function matchingPreset(c: SessionConfig): PresetChoice {
-  for (const id of ["calm", "focus", "deep"] as PresetId[]) {
-    const p = PRESETS[id];
-    if (
-      p.inhaleSec === c.inhaleSec &&
-      p.exhaleSec === c.exhaleSec &&
-      p.activeSec === c.activeSec &&
-      p.restSec === c.restSec &&
-      p.rounds === c.rounds
-    ) {
-      return id;
-    }
-  }
-  return "custom";
 }
 
 // ---------------------------------------------------------------------------
@@ -106,34 +116,10 @@ function renderSetup(): HTMLElement {
   title.textContent = "Breathe";
   card.appendChild(title);
 
-  card.appendChild(renderPresets());
   card.appendChild(renderFields());
   card.appendChild(renderFooter());
 
   return card;
-}
-
-function renderPresets(): HTMLElement {
-  const group = document.createElement("div");
-  group.className = "presets";
-  group.setAttribute("role", "radiogroup");
-  group.setAttribute("aria-label", "Preset");
-
-  for (const choice of PRESET_ORDER) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "preset";
-    btn.textContent = PRESET_LABELS[choice];
-    btn.setAttribute("role", "radio");
-    btn.setAttribute(
-      "aria-pressed",
-      activeChoice === choice ? "true" : "false",
-    );
-    btn.addEventListener("click", () => onPresetClick(choice));
-    group.appendChild(btn);
-  }
-
-  return group;
 }
 
 function renderFields(): HTMLElement {
@@ -144,15 +130,9 @@ function renderFields(): HTMLElement {
     const row = document.createElement("div");
     row.className = "field";
 
-    const labelWrap = document.createElement("label");
-    labelWrap.htmlFor = `f-${spec.key}`;
-    labelWrap.textContent = spec.label;
-    if (spec.unit) {
-      const unit = document.createElement("span");
-      unit.className = "unit";
-      unit.textContent = spec.unit;
-      labelWrap.appendChild(unit);
-    }
+    const labelEl = document.createElement("label");
+    labelEl.htmlFor = `f-${spec.key}`;
+    labelEl.textContent = spec.label;
 
     const input = document.createElement("input");
     input.id = `f-${spec.key}`;
@@ -162,8 +142,13 @@ function renderFields(): HTMLElement {
     input.value = String(config[spec.key]);
     input.addEventListener("input", () => onFieldChange(spec.key, input.value));
 
-    row.appendChild(labelWrap);
+    const unitEl = document.createElement("span");
+    unitEl.className = "unit";
+    unitEl.textContent = spec.unit;
+
+    row.appendChild(labelEl);
     row.appendChild(input);
+    row.appendChild(unitEl);
     wrap.appendChild(row);
   }
 
@@ -269,33 +254,30 @@ function updateTimeline(elapsedMs: number): void {
 function updateSessionUI(): void {
   const phaseEl = document.getElementById("phase");
   const roundEl = document.getElementById("round");
-  console.log("[breathe] updateSessionUI", { currentPhaseLabel, currentRound, phaseElFound: !!phaseEl, roundElFound: !!roundEl });
   if (phaseEl) phaseEl.textContent = currentPhaseLabel;
   if (roundEl) roundEl.textContent = `Round ${currentRound} of ${config.rounds}`;
+}
+
+function updateDurationLabel(): void {
+  const el = document.querySelector<HTMLElement>(".duration");
+  if (el) el.textContent = `Total · ${formatDuration(totalDurationSec(config))}`;
 }
 
 // ---------------------------------------------------------------------------
 // Handlers
 // ---------------------------------------------------------------------------
 
-function onPresetClick(choice: PresetChoice): void {
-  activeChoice = choice;
-  if (choice !== "custom") {
-    config = { ...PRESETS[choice] };
-  }
-  render();
-}
-
 function onFieldChange(key: keyof SessionConfig, value: string): void {
   const n = Number(value);
   if (!Number.isFinite(n) || n <= 0) return;
   config = { ...config, [key]: n };
-  activeChoice = matchingPreset(config);
-  render();
+  saveConfig(config);
+  // Surgical update — don't re-render, or the input we're typing into
+  // gets replaced and loses focus.
+  updateDurationLabel();
 }
 
 function onStart(): void {
-  console.log("[breathe] onStart", { config });
   try {
     session = createSession(config);
   } catch (err) {
@@ -311,14 +293,9 @@ function onStart(): void {
   currentPhaseLabel = "";
   currentRound = 1;
   render();
-  console.log("[breathe] rendered session view", {
-    phaseEl: document.getElementById("phase"),
-    roundEl: document.getElementById("round"),
-  });
 
   sessionStartPerfMs = performance.now();
   const initial = session.start(0);
-  console.log("[breathe] initial events", initial);
   handleEvents(initial);
 
   const tick = () => {
@@ -354,10 +331,7 @@ function teardownSession(): void {
 }
 
 function handleEvents(events: readonly SessionEvent[]): void {
-  if (events.length > 0) console.log("[breathe] events", events);
   for (const ev of events) {
-    // Update state first, then render, then touch audio — so a broken
-    // audio layer cannot stop the UI from reflecting the state machine.
     switch (ev.kind) {
       case "inhale-start":
         currentRound = ev.round;

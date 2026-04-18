@@ -47,42 +47,6 @@ main {
   text-align: center;
 }
 
-/* ---- Preset picker ---- */
-
-.presets {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-.preset {
-  appearance: none;
-  border: none;
-  background: transparent;
-  padding: 10px 0;
-  font: inherit;
-  font-size: 13px;
-  color: var(--muted);
-  cursor: pointer;
-  border-right: 1px solid var(--border);
-  transition: background 120ms, color 120ms;
-}
-
-.preset:last-child {
-  border-right: none;
-}
-
-.preset:hover {
-  color: var(--fg);
-}
-
-.preset[aria-pressed="true"] {
-  background: var(--fg);
-  color: var(--bg);
-}
-
 /* ---- Parameter fields ---- */
 
 .fields {
@@ -95,9 +59,9 @@ main {
 
 .field {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto 32px;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
   padding: 14px 4px;
   border-bottom: 1px solid var(--border);
 }
@@ -114,7 +78,7 @@ main {
 .field .unit {
   font-size: 12px;
   color: var(--muted);
-  margin-left: 6px;
+  text-align: left;
 }
 
 .field input {
