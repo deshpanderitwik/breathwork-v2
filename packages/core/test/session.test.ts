@@ -82,7 +82,7 @@ describe("createSession validation", () => {
  *   - round-complete emitted at the end of each rest phase
  *   - session-complete emitted exactly once, at total duration
  */
-describe.skip("session event sequence (Phase 1)", () => {
+describe("session event sequence (Phase 1)", () => {
   it("Calm preset emits the expected number of each event kind", () => {
     const { events } = runSession(PRESETS.calm);
     const kinds = events.reduce<Record<string, number>>((acc, e) => {

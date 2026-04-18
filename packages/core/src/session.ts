@@ -1,8 +1,6 @@
+import { ACTIVE_TO_REST_FADE_SEC } from "./tone-set.js";
 import type { Phase, Session, SessionConfig, SessionEvent } from "./types.js";
 
-/**
- * Validation errors thrown by createSession when config is invalid.
- */
 export class InvalidSessionConfigError extends Error {
   constructor(message: string) {
     super(message);
@@ -43,39 +41,131 @@ function computeTotalDurationSec(config: SessionConfig): number {
   return config.rounds * (config.activeSec + config.restSec);
 }
 
-/**
- * Phase 0 stub. The real state machine lands in Phase 1.
- *
- * It must pass the contract tests (test/session.test.ts) which encode the
- * expected event sequence for each preset + edge cases. An agent implementing
- * Phase 1 will flesh out start/tick with the actual logic.
- */
+function buildSchedule(
+  config: SessionConfig,
+  startMs: number,
+  totalDurationSec: number,
+): Array<{ atMs: number; event: SessionEvent }> {
+  const scheduled: Array<{ atMs: number; event: SessionEvent }> = [];
+  const cycleSec = config.inhaleSec + config.exhaleSec;
+
+  for (let r = 1; r <= config.rounds; r++) {
+    const roundStartMs =
+      startMs + (r - 1) * (config.activeSec + config.restSec) * 1000;
+
+    for (let c = 0; ; c++) {
+      const inhaleOffsetSec = c * cycleSec;
+      const exhaleOffsetSec = inhaleOffsetSec + config.inhaleSec;
+
+      if (inhaleOffsetSec >= config.activeSec) break;
+
+      const inhaleAtMs = roundStartMs + inhaleOffsetSec * 1000;
+      scheduled.push({
+        atMs: inhaleAtMs,
+        event: { kind: "inhale-start", round: r, durationSec: config.inhaleSec, atMs: inhaleAtMs },
+      });
+
+      if (exhaleOffsetSec < config.activeSec) {
+        const exhaleAtMs = roundStartMs + exhaleOffsetSec * 1000;
+        scheduled.push({
+          atMs: exhaleAtMs,
+          event: { kind: "exhale-start", round: r, durationSec: config.exhaleSec, atMs: exhaleAtMs },
+        });
+      }
+    }
+
+    const restAtMs = roundStartMs + config.activeSec * 1000;
+    scheduled.push({
+      atMs: restAtMs,
+      event: {
+        kind: "rest-start",
+        round: r,
+        durationSec: config.restSec,
+        fadeOutSec: ACTIVE_TO_REST_FADE_SEC,
+        atMs: restAtMs,
+      },
+    });
+
+    const roundCompleteAtMs = restAtMs + config.restSec * 1000;
+    scheduled.push({
+      atMs: roundCompleteAtMs,
+      event: { kind: "round-complete", round: r, atMs: roundCompleteAtMs },
+    });
+  }
+
+  const sessionCompleteAtMs = startMs + totalDurationSec * 1000;
+  scheduled.push({
+    atMs: sessionCompleteAtMs,
+    event: { kind: "session-complete", atMs: sessionCompleteAtMs },
+  });
+
+  // Stable sort — equal-atMs items preserve insertion order (round-complete before session-complete)
+  scheduled.sort((a, b) => a.atMs - b.atMs);
+
+  return scheduled;
+}
+
+function phaseFromEvent(event: SessionEvent): Phase {
+  switch (event.kind) {
+    case "inhale-start":
+      return { kind: "active-inhale", round: event.round, startedAtMs: event.atMs };
+    case "exhale-start":
+      return { kind: "active-exhale", round: event.round, startedAtMs: event.atMs };
+    case "rest-start":
+      return { kind: "rest", round: event.round, startedAtMs: event.atMs };
+    case "session-complete":
+      return { kind: "complete" };
+    default:
+      return undefined as never;
+  }
+}
+
 export function createSession(config: SessionConfig): Session {
   validate(config);
   const totalDurationSec = computeTotalDurationSec(config);
 
   let phase: Phase = { kind: "idle" };
   let stopped = false;
+  let queue: Array<{ atMs: number; event: SessionEvent }> = [];
+  let cursor = 0;
+
+  function drain(nowMs: number): readonly SessionEvent[] {
+    const events: SessionEvent[] = [];
+    while (cursor < queue.length) {
+      const entry = queue[cursor];
+      if (!entry || entry.atMs > nowMs) break;
+      cursor++;
+      events.push(entry.event);
+      if (entry.event.kind !== "round-complete") {
+        phase = phaseFromEvent(entry.event);
+      }
+    }
+    return events;
+  }
 
   return {
-    start(_nowMs: number): readonly SessionEvent[] {
+    start(nowMs: number): readonly SessionEvent[] {
       if (stopped) return [];
-      // TODO(phase-1): emit first inhale-start event and transition phase.
-      void config;
-      return [];
+      queue = buildSchedule(config, nowMs, totalDurationSec);
+      cursor = 0;
+      return drain(nowMs);
     },
-    tick(_nowMs: number): readonly SessionEvent[] {
-      if (stopped) return [];
-      // TODO(phase-1): advance phase and return events due at or before nowMs.
-      return [];
+
+    tick(nowMs: number): readonly SessionEvent[] {
+      if (stopped || queue.length === 0) return [];
+      return drain(nowMs);
     },
+
     stop(): void {
       stopped = true;
       phase = { kind: "idle" };
+      queue = [];
     },
+
     get phase() {
       return phase;
     },
+
     get totalDurationSec() {
       return totalDurationSec;
     },

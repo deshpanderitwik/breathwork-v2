@@ -1,0 +1,268 @@
+:root {
+  --bg: #0e0e0d;
+  --fg: #ededea;
+  --muted: #7a7a75;
+  --border: #242422;
+  --accent: #ededea;
+  --radius: 4px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 48px 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.title {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ---- Preset picker ---- */
+
+.presets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.preset {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 10px 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+  transition: background 120ms, color 120ms;
+}
+
+.preset:last-child {
+  border-right: none;
+}
+
+.preset:hover {
+  color: var(--fg);
+}
+
+.preset[aria-pressed="true"] {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+/* ---- Parameter fields ---- */
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.field:last-child {
+  border-bottom: none;
+}
+
+.field label {
+  font-size: 14px;
+  color: var(--fg);
+}
+
+.field .unit {
+  font-size: 12px;
+  color: var(--muted);
+  margin-left: 6px;
+}
+
+.field input {
+  appearance: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--fg);
+  width: 80px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: var(--fg);
+}
+
+/* Strip the native spinner arrows on number inputs. */
+.field input[type="number"] {
+  -moz-appearance: textfield;
+}
+.field input[type="number"]::-webkit-inner-spin-button,
+.field input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* ---- Footer row ---- */
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.duration {
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.start {
+  appearance: none;
+  border: none;
+  background: var(--fg);
+  color: var(--bg);
+  padding: 10px 24px;
+  font: inherit;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: opacity 120ms;
+}
+
+.start:hover {
+  opacity: 0.85;
+}
+
+.start:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---- Session view ---- */
+
+.session {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.phase {
+  font-size: 56px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+  min-height: 1.2em;
+  transition: opacity 400ms ease;
+}
+
+.round {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---- Timeline ---- */
+
+.timeline {
+  display: flex;
+  gap: 2px;
+  width: min(420px, 80vw);
+  height: 6px;
+  margin-top: 16px;
+}
+
+.seg {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.seg-active {
+  background: rgba(237, 237, 234, 0.12);
+}
+
+.seg-rest {
+  background: rgba(237, 237, 234, 0.04);
+}
+
+.seg-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform: scaleX(0);
+  background: var(--fg);
+  border-radius: inherit;
+  transition: transform 120ms linear;
+}
+
+.seg-rest .seg-fill {
+  background: rgba(237, 237, 234, 0.5);
+}
+
+.stop {
+  margin-top: 48px;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 8px 16px;
+  transition: color 120ms;
+}
+
+.stop:hover {
+  color: var(--fg);
+}

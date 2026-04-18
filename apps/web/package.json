@@ -4,11 +4,16 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "echo 'Phase 2: scaffold Vite app here.' && exit 0",
-    "build": "echo 'Phase 2: scaffold Vite app here.' && exit 0",
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
     "test": "echo 'Phase 2' && exit 0"
   },
   "dependencies": {
     "@breathe/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "vite": "^5.2.0"
   }
 }
