@@ -1,25 +1,24 @@
 import Cocoa
+import Combine
 import SwiftUI
+import BreathCore
 
-/// Menu bar app:
-///   - Left-click  → toggle session (start/stop)
-///   - Right-click → settings popover with the same 5 fields as the web app
-///
-/// Quit is in the settings popover footer.
+/// macOS menu bar shell:
+///   - Left-click  → toggle session
+///   - Right-click → popover: live session view (when running) + settings
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
+
     private let store = SettingsStore()
     private let tones = ToneEngine()
+    private let state = AppState()
+    private lazy var controller = SessionController(state: state, tones: tones)
 
-    private var config: SessionConfig = .default
-    private var session: BreathSession?
-    private var sessionStart = Date()
-    private var tickTimer: Timer?
-    private var isRunning = false
+    private var runningCancellable: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        config = store.load()
+        state.config = store.load()
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
@@ -31,10 +30,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         popover = NSPopover()
         popover.behavior = .transient
-        popover.contentSize = NSSize(width: 260, height: 340)
-        popover.contentViewController = NSHostingController(rootView: makeRootView())
+        popover.contentSize = NSSize(width: 300, height: 380)
+        popover.contentViewController = NSHostingController(
+            rootView: MacPopoverView(state: state, onConfigChange: { [weak self] new in
+                self?.store.save(new)
+            })
+        )
 
-        // Minimal main menu so ⌘Q works.
+        // Keep the status item icon in sync with running state.
+        runningCancellable = state.$isRunning
+            .receive(on: RunLoop.main)
+            .sink { [weak self] running in
+                self?.statusItem.button?.image = NSImage(
+                    systemSymbolName: running ? "stop.fill" : "wind",
+                    accessibilityDescription: "Breathwork"
+                )
+            }
+
         let mainMenu = NSMenu()
         let appItem = NSMenuItem()
         mainMenu.addItem(appItem)
@@ -48,136 +60,67 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.mainMenu = mainMenu
     }
 
-    private func makeRootView() -> some View {
-        // SwiftUI needs an ObservableObject to track binding updates across
-        // popover re-presentations — a thin box does the job.
-        SettingsRoot(
-            initial: config,
-            onChange: { [weak self] new in
-                self?.config = new
-                self?.store.save(new)
-            }
-        )
-    }
-
-    // MARK: - Status item
-
     @objc private func statusItemClicked(_ sender: NSStatusBarButton) {
         guard let event = NSApp.currentEvent else { return }
         if event.type == .rightMouseUp {
-            showSettingsPopover(from: sender)
+            showPopover(from: sender)
         } else {
-            toggleSession()
+            controller.toggle()
         }
     }
 
-    private func showSettingsPopover(from button: NSStatusBarButton) {
+    private func showPopover(from button: NSStatusBarButton) {
         if popover.isShown {
             popover.performClose(nil)
             return
         }
-        popover.contentViewController = NSHostingController(rootView: makeRootView())
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         popover.contentViewController?.view.window?.makeKey()
     }
-
-    // MARK: - Session lifecycle
-
-    private func toggleSession() {
-        if isRunning {
-            stopSession()
-        } else {
-            startSession()
-        }
-    }
-
-    private func startSession() {
-        do {
-            session = try BreathSession(config: config)
-        } catch let err as InvalidSessionConfig {
-            let alert = NSAlert()
-            alert.messageText = "Can't start"
-            alert.informativeText = err.message
-            alert.runModal()
-            return
-        } catch {
-            return
-        }
-
-        isRunning = true
-        sessionStart = Date()
-        updateIconForState()
-
-        let initial = session?.start(nowMs: 0) ?? []
-        handleEvents(initial)
-
-        tickTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            self?.tick()
-        }
-    }
-
-    private func stopSession() {
-        tickTimer?.invalidate()
-        tickTimer = nil
-        session?.stop()
-        session = nil
-        tones.stop()
-        isRunning = false
-        updateIconForState()
-    }
-
-    private func tick() {
-        guard let session = session else { return }
-        let elapsedMs = Date().timeIntervalSince(sessionStart) * 1000
-        let events = session.tick(nowMs: elapsedMs)
-        if !events.isEmpty { handleEvents(events) }
-    }
-
-    private func handleEvents(_ events: [SessionEvent]) {
-        for ev in events {
-            switch ev {
-            case .inhaleStart(_, let durationSec, _):
-                tones.playInhale(durationSec: durationSec)
-            case .exhaleStart(_, let durationSec, _):
-                tones.playExhale(durationSec: durationSec)
-            case .restStart(_, _, let fadeOutSec, _):
-                tones.fadeOut(fadeSec: fadeOutSec)
-            case .roundComplete:
-                break
-            case .sessionComplete:
-                stopSession()
-            }
-        }
-    }
-
-    private func updateIconForState() {
-        let symbol = isRunning ? "stop.fill" : "wind"
-        statusItem.button?.image = NSImage(
-            systemSymbolName: symbol, accessibilityDescription: "Breathwork"
-        )
-    }
 }
 
-// MARK: - SwiftUI root
+// MARK: - Popover view
 
-/// Wraps the form in an ObservableObject so two-way bindings survive
-/// popover re-presentation.
-private final class SettingsModel: ObservableObject {
-    @Published var config: SessionConfig
-    init(_ config: SessionConfig) { self.config = config }
-}
-
-private struct SettingsRoot: View {
-    @StateObject private var model: SettingsModel
-    let onChange: (SessionConfig) -> Void
-
-    init(initial: SessionConfig,
-         onChange: @escaping (SessionConfig) -> Void) {
-        _model = StateObject(wrappedValue: SettingsModel(initial))
-        self.onChange = onChange
-    }
+private struct MacPopoverView: View {
+    @ObservedObject var state: AppState
+    let onConfigChange: (SessionConfig) -> Void
 
     var body: some View {
-        SettingsView(config: $model.config, onChange: onChange)
+        VStack(spacing: 0) {
+            Text("BREATHE")
+                .font(.system(size: 11, weight: .medium))
+                .kerning(1.0)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.top, 16)
+                .padding(.bottom, 12)
+            Divider()
+
+            if state.isRunning {
+                VStack(spacing: 10) {
+                    Text(state.currentPhase.isEmpty ? " " : state.currentPhase)
+                        .font(.system(size: 20, weight: .light))
+                    Text("Round \(state.currentRound) of \(state.config.rounds)")
+                        .font(.system(size: 10, weight: .medium))
+                        .kerning(1.0)
+                        .foregroundColor(.secondary)
+                        .textCase(.uppercase)
+                    TimelineView(config: state.config, elapsedMs: state.elapsedMs)
+                        .frame(height: 6)
+                        .padding(.horizontal, 14)
+                        .padding(.top, 4)
+                }
+                .padding(.top, 16)
+                .padding(.bottom, 12)
+                .frame(maxWidth: .infinity)
+                Divider()
+            }
+
+            SettingsView(config: Binding(
+                get: { state.config },
+                set: { state.config = $0; onConfigChange($0) }
+            ))
+        }
+        .frame(width: 300)
     }
 }

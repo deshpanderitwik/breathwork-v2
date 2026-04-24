@@ -1,12 +1,14 @@
 import Foundation
 
-/// Persists SessionConfig across launches. Mirrors the web app's
-/// `breathe.session-config.v1` localStorage key.
-final class SettingsStore {
+/// Persists SessionConfig across launches. Same key as the web app's
+/// localStorage: `breathe.session-config.v1`.
+public final class SettingsStore {
     private let key = "breathe.session-config.v1"
     private let defaults = UserDefaults.standard
 
-    func load() -> SessionConfig {
+    public init() {}
+
+    public func load() -> SessionConfig {
         guard let data = defaults.data(forKey: key),
               let decoded = try? JSONDecoder().decode(SessionConfig.self, from: data),
               decoded.inhaleSec > 0, decoded.exhaleSec > 0,
@@ -17,7 +19,7 @@ final class SettingsStore {
         return decoded
     }
 
-    func save(_ config: SessionConfig) {
+    public func save(_ config: SessionConfig) {
         guard let data = try? JSONEncoder().encode(config) else { return }
         defaults.set(data, forKey: key)
     }

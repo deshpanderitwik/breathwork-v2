@@ -13,6 +13,8 @@ out/
 .build/
 .swiftpm/
 DerivedData/
+# Xcode project is generated from apps/ios/project.yml by xcodegen.
+apps/ios/Breathe.xcodeproj/
 *.xcodeproj/xcuserdata/
 *.xcworkspace/xcuserdata/
 xcuserdata/

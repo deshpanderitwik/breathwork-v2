@@ -3,22 +3,30 @@ import Foundation
 /// Swift port of packages/core/src/session.ts. Same schedule, same events —
 /// if we ever spot drift between platforms, this file is the suspect.
 
-struct SessionConfig: Codable, Equatable {
-    var inhaleSec: Double
-    var exhaleSec: Double
-    var activeSec: Double
-    var restSec: Double
-    var rounds: Int
+public struct SessionConfig: Codable, Equatable {
+    public var inhaleSec: Double
+    public var exhaleSec: Double
+    public var activeSec: Double
+    public var restSec: Double
+    public var rounds: Int
 
-    static let `default` = SessionConfig(
+    public init(inhaleSec: Double, exhaleSec: Double, activeSec: Double, restSec: Double, rounds: Int) {
+        self.inhaleSec = inhaleSec
+        self.exhaleSec = exhaleSec
+        self.activeSec = activeSec
+        self.restSec = restSec
+        self.rounds = rounds
+    }
+
+    public static let `default` = SessionConfig(
         inhaleSec: 4, exhaleSec: 4, activeSec: 120, restSec: 15, rounds: 4
     )
 
-    var totalDurationSec: Double {
+    public var totalDurationSec: Double {
         Double(rounds) * (activeSec + restSec)
     }
 
-    func formattedDuration() -> String {
+    public func formattedDuration() -> String {
         let total = Int(totalDurationSec.rounded())
         let min = total / 60
         let sec = total % 60
@@ -26,14 +34,14 @@ struct SessionConfig: Codable, Equatable {
     }
 }
 
-enum SessionEvent: Equatable {
+public enum SessionEvent: Equatable {
     case inhaleStart(round: Int, durationSec: Double, atMs: Double)
     case exhaleStart(round: Int, durationSec: Double, atMs: Double)
     case restStart(round: Int, durationSec: Double, fadeOutSec: Double, atMs: Double)
     case roundComplete(round: Int, atMs: Double)
     case sessionComplete(atMs: Double)
 
-    var atMs: Double {
+    public var atMs: Double {
         switch self {
         case .inhaleStart(_, _, let t), .exhaleStart(_, _, let t),
              .restStart(_, _, _, let t), .roundComplete(_, let t),
@@ -43,19 +51,18 @@ enum SessionEvent: Equatable {
     }
 }
 
-struct InvalidSessionConfig: Error { let message: String }
+public struct InvalidSessionConfig: Error { public let message: String }
 
-/// The fade duration used at active → rest boundary. Mirrors
-/// packages/core/src/tone-set.ts `ACTIVE_TO_REST_FADE_SEC`.
-let activeToRestFadeSec: Double = 1.5
+/// The fade duration used at active → rest boundary.
+public let activeToRestFadeSec: Double = 1.5
 
-final class BreathSession {
+public final class BreathSession {
     private let config: SessionConfig
     private var queue: [(atMs: Double, event: SessionEvent)] = []
     private var cursor = 0
     private var stopped = false
 
-    init(config: SessionConfig) throws {
+    public init(config: SessionConfig) throws {
         let positives: [(String, Double)] = [
             ("inhaleSec", config.inhaleSec),
             ("exhaleSec", config.exhaleSec),
@@ -77,19 +84,19 @@ final class BreathSession {
         self.config = config
     }
 
-    func start(nowMs: Double) -> [SessionEvent] {
+    public func start(nowMs: Double) -> [SessionEvent] {
         guard !stopped else { return [] }
         queue = Self.buildSchedule(config: config, startMs: nowMs)
         cursor = 0
         return drain(nowMs: nowMs)
     }
 
-    func tick(nowMs: Double) -> [SessionEvent] {
+    public func tick(nowMs: Double) -> [SessionEvent] {
         guard !stopped, !queue.isEmpty else { return [] }
         return drain(nowMs: nowMs)
     }
 
-    func stop() {
+    public func stop() {
         stopped = true
         queue = []
     }
@@ -147,7 +154,6 @@ final class BreathSession {
         let sessionCompleteAt = startMs + config.totalDurationSec * 1000
         out.append((sessionCompleteAt, .sessionComplete(atMs: sessionCompleteAt)))
 
-        // Stable sort by atMs — equal-atMs items keep insertion order.
         let indexed = out.enumerated().map { ($0, $1.0, $1.1) }
         let sorted = indexed.sorted { a, b in
             a.1 == b.1 ? a.0 < b.0 : a.1 < b.1

@@ -2,14 +2,15 @@ import AVFoundation
 
 /// Chime generation lifted from breathwork-v1/Sources/BreathEngine.swift.
 /// Fundamental + 2nd partial (×0.3) + 3rd partial (×0.1), 8ms linear attack,
-/// exp(-5.5·t) decay, overall scale ×0.25. Warmer than pure sines.
-final class ToneEngine {
+/// exp(-5.5·t) decay, overall scale ×0.25.
+///
+/// On iOS, we configure AVAudioSession for `.playback` so chimes continue
+/// with the screen locked (requires `UIBackgroundModes: audio` in Info.plist).
+public final class ToneEngine {
     private let sampleRate: Double = 44100
     private let chimeDuration: Double = 0.6
-
-    // G4 inhale, D5 exhale (a fifth up) — inherited from v1.
-    private let inhaleFreq: Float = 392.0
-    private let exhaleFreq: Float = 587.33
+    private let inhaleFreq: Float = 392.0   // G4
+    private let exhaleFreq: Float = 587.33  // D5 (a fifth up)
 
     private let engine = AVAudioEngine()
     private let player = AVAudioPlayerNode()
@@ -17,7 +18,7 @@ final class ToneEngine {
     private var exhaleBuffer: AVAudioPCMBuffer!
     private var started = false
 
-    init() {
+    public init() {
         let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
         engine.attach(player)
         engine.connect(player, to: engine.mainMixerNode, format: format)
@@ -50,6 +51,13 @@ final class ToneEngine {
 
     private func ensureStarted() {
         guard !started else { return }
+        #if os(iOS)
+        // Keep playing when the screen locks. Requires background audio
+        // entitlement — see apps/ios Info.plist.
+        let session = AVAudioSession.sharedInstance()
+        try? session.setCategory(.playback, mode: .default, options: [])
+        try? session.setActive(true, options: [])
+        #endif
         do {
             try engine.start()
             player.play()
@@ -59,14 +67,12 @@ final class ToneEngine {
         }
     }
 
-    /// Schedule one chime per count-second across `durationSec`.
-    /// A 4s inhale → 4 chimes at t=0,1,2,3 relative to now.
-    func playInhale(durationSec: Double) {
+    public func playInhale(durationSec: Double) {
         ensureStarted()
         scheduleCounts(durationSec: durationSec, buffer: inhaleBuffer)
     }
 
-    func playExhale(durationSec: Double) {
+    public func playExhale(durationSec: Double) {
         ensureStarted()
         scheduleCounts(durationSec: durationSec, buffer: exhaleBuffer)
     }
@@ -75,9 +81,7 @@ final class ToneEngine {
         let count = max(1, Int(durationSec.rounded()))
         guard let lastRender = player.lastRenderTime,
               let playerTime = player.playerTime(forNodeTime: lastRender) else {
-            // First schedule before engine has rendered — fall back to "now".
-            player.scheduleBuffer(buffer, at: nil, options: [], completionHandler: nil)
-            for _ in 1..<count {
+            for _ in 0..<count {
                 player.scheduleBuffer(buffer, at: nil, options: [], completionHandler: nil)
             }
             return
@@ -85,21 +89,26 @@ final class ToneEngine {
         let sr = playerTime.sampleRate
         let nowSample = playerTime.sampleTime
         for i in 0..<count {
-            let at = AVAudioTime(sampleTime: nowSample + AVAudioFramePosition(Double(i) * sr), atRate: sr)
+            let at = AVAudioTime(
+                sampleTime: nowSample + AVAudioFramePosition(Double(i) * sr),
+                atRate: sr
+            )
             player.scheduleBuffer(buffer, at: at, options: [], completionHandler: nil)
         }
     }
 
-    func fadeOut(fadeSec: Double) {
-        // Simple approach: clear anything queued. Any currently-ringing chime
-        // is short (0.6s) and tapers naturally via its exp decay.
+    public func fadeOut(fadeSec: Double) {
+        // Short chimes taper naturally via their exp decay — just flush the queue.
         player.stop()
         player.play()
     }
 
-    func stop() {
+    public func stop() {
         player.stop()
         engine.stop()
         started = false
+        #if os(iOS)
+        try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
+        #endif
     }
 }

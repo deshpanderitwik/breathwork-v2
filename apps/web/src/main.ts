@@ -75,6 +75,9 @@ let config: SessionConfig = loadConfig();
 let session: Session | null = null;
 let tones: ToneSet | null = null;
 let rafHandle: number | null = null;
+// Secondary driver — setInterval keeps firing (throttled to ~1s) when the
+// tab is backgrounded and rAF is paused, so audio events still dispatch.
+let intervalHandle: number | null = null;
 let sessionStartPerfMs = 0;
 let currentPhaseLabel = "";
 let currentRound = 1;
@@ -304,9 +307,14 @@ function onStart(): void {
     const events = session.tick(nowMs);
     if (events.length > 0) handleEvents(events);
     updateTimeline(nowMs);
-    rafHandle = requestAnimationFrame(tick);
   };
-  rafHandle = requestAnimationFrame(tick);
+  const rafLoop = () => {
+    tick();
+    rafHandle = requestAnimationFrame(rafLoop);
+  };
+  rafHandle = requestAnimationFrame(rafLoop);
+  // Fallback driver for backgrounded tabs where rAF pauses.
+  intervalHandle = window.setInterval(tick, 500);
 }
 
 function onStop(): void {
@@ -319,6 +327,10 @@ function teardownSession(): void {
   if (rafHandle !== null) {
     cancelAnimationFrame(rafHandle);
     rafHandle = null;
+  }
+  if (intervalHandle !== null) {
+    clearInterval(intervalHandle);
+    intervalHandle = null;
   }
   if (session) {
     session.stop();
