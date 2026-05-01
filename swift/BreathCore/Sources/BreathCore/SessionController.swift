@@ -1,7 +1,8 @@
 import Foundation
+import BreathRuntime
 
-/// Wires a BreathSession + ToneEngine + AppState together. Starts the
-/// session, drives ticks on a timer, translates events into tone calls
+/// Wires the JS-backed BreathRuntime + ToneEngine + AppState together. Starts
+/// the session, drives ticks on a timer, translates events into tone calls
 /// and UI state mutations, and cleans up on stop.
 ///
 /// Both macOS (menu bar) and iOS (screen) use this — they differ only in
@@ -9,7 +10,8 @@ import Foundation
 public final class SessionController {
     private let state: AppState
     private let tones: ToneEngine
-    private var session: BreathSession?
+    private let runtime: BreathRuntime
+    private var session: SessionHandle?
     private var tickTimer: Timer?
 
     /// Real wall-clock time when the current session (re)started. We derive
@@ -18,16 +20,20 @@ public final class SessionController {
     private var segmentStart = Date()
     private var accumulatedMs: Double = 0
 
-    public init(state: AppState, tones: ToneEngine) {
+    public init(state: AppState, tones: ToneEngine, runtime: BreathRuntime) {
         self.state = state
         self.tones = tones
+        self.runtime = runtime
     }
 
     public var isRunning: Bool { state.isRunning }
 
+    /// Menu-bar click behavior: a running session stops fully, an idle one
+    /// starts. Pause/resume stays available via `pause()` / `resume()` for
+    /// surfaces (iOS) that expose dedicated controls.
     public func toggle() {
         if state.isRunning {
-            if state.isPaused { resume() } else { pause() }
+            stop()
         } else {
             start()
         }
@@ -35,7 +41,7 @@ public final class SessionController {
 
     public func start() {
         do {
-            session = try BreathSession(config: state.config)
+            session = try runtime.createSession(config: state.config)
         } catch {
             return
         }

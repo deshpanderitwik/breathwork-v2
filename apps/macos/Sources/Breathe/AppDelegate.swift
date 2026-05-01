@@ -10,16 +10,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
 
+    private let runtime: BreathRuntime
     private let store = SettingsStore()
     private let tones = ToneEngine()
-    private let state = AppState()
-    private lazy var controller = SessionController(state: state, tones: tones)
+    private let state: AppState
+    private lazy var controller = SessionController(state: state, tones: tones, runtime: runtime)
 
     private var runningCancellable: AnyCancellable?
 
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        state.config = store.load()
+    override init() {
+        do {
+            self.runtime = try BreathRuntime()
+        } catch {
+            fatalError("BreathRuntime failed to load: \(error)")
+        }
+        self.state = AppState(config: store.load(default: runtime.defaultConfig))
+        super.init()
+    }
 
+    func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
             button.image = NSImage(systemSymbolName: "wind", accessibilityDescription: "Breathwork")

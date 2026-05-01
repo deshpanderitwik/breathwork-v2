@@ -10,7 +10,16 @@ let package = Package(
     products: [
         .library(name: "BreathCore", targets: ["BreathCore"])
     ],
+    dependencies: [
+        .package(path: "../BreathRuntime"),
+    ],
     targets: [
-        .target(name: "BreathCore", path: "Sources/BreathCore")
+        .target(
+            name: "BreathCore",
+            dependencies: [
+                .product(name: "BreathRuntime", package: "BreathRuntime"),
+            ],
+            path: "Sources/BreathCore"
+        )
     ]
 )

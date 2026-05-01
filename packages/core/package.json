@@ -19,7 +19,8 @@
     "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "gen-fixtures": "node test/fixtures/generate.mjs"
   },
   "devDependencies": {
     "tsup": "^8.0.2",

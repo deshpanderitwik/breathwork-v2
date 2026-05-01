@@ -1,0 +1,3 @@
+# Synced from packages/core/test/fixtures/ by scripts/sync-core.sh.
+# JSON files in this directory are gitignored; this .gitkeep ensures the
+# directory exists so SPM's `.process("Fixtures")` resolves on a fresh checkout.

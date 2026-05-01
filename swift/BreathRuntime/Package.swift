@@ -22,7 +22,11 @@ let package = Package(
         ),
         .testTarget(
             name: "BreathRuntimeTests",
-            dependencies: ["BreathRuntime"]
+            dependencies: ["BreathRuntime"],
+            resources: [
+                // Synced from packages/core/test/fixtures/ by sync-core.sh.
+                .process("Fixtures")
+            ]
         ),
     ]
 )

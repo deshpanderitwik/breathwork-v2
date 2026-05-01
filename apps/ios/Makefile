@@ -5,14 +5,17 @@ DEVICE = E2291A1F-8481-4237-93DE-422683F39644
 DERIVED = build
 APP = $(DERIVED)/Build/Products/Debug-iphoneos/Breathe.app
 
-.PHONY: project build install launch run clean devices
+.PHONY: project build install launch run clean devices sync-core
+
+sync-core:
+	@../../scripts/sync-core.sh
 
 # Regenerate .xcodeproj from project.yml
 project:
 	@xcodegen generate
 
 # Compile + sign for the device (no install)
-build: project
+build: project sync-core
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) \
 		-destination 'generic/platform=iOS' -configuration Debug \
 		-allowProvisioningUpdates -derivedDataPath $(DERIVED) build

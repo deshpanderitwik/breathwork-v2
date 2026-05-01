@@ -9,6 +9,10 @@ build/
 out/
 *.tsbuildinfo
 
+# Synced from packages/core/dist by scripts/sync-core.sh — not source.
+swift/BreathRuntime/Sources/BreathRuntime/Resources/core.iife.js
+swift/BreathRuntime/Tests/BreathRuntimeTests/Fixtures/*.json
+
 # Swift / Xcode
 .build/
 .swiftpm/
