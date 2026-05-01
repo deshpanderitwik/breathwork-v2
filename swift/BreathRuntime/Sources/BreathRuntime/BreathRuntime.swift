@@ -82,6 +82,37 @@ public enum SessionEvent: Sendable, Equatable {
     }
 }
 
+/// Mirror of `TONE_DESIGN` in `packages/core/src/tone-design.ts`. Read from
+/// the JS core via `BreathRuntime.toneDesign()` so platform audio engines
+/// synthesize from the same parameters.
+public struct ToneDesign: Sendable, Equatable {
+    public let inhaleFreqHz: Double
+    public let exhaleFreqHz: Double
+    public let chimeDurationSec: Double
+    public let attackSec: Double
+    public let decayLambda: Double
+    public let partial2Weight: Double
+    public let partial3Weight: Double
+    public let masterScale: Double
+    public let chimesPerSec: Double
+
+    public init(
+        inhaleFreqHz: Double, exhaleFreqHz: Double, chimeDurationSec: Double,
+        attackSec: Double, decayLambda: Double, partial2Weight: Double,
+        partial3Weight: Double, masterScale: Double, chimesPerSec: Double
+    ) {
+        self.inhaleFreqHz = inhaleFreqHz
+        self.exhaleFreqHz = exhaleFreqHz
+        self.chimeDurationSec = chimeDurationSec
+        self.attackSec = attackSec
+        self.decayLambda = decayLambda
+        self.partial2Weight = partial2Weight
+        self.partial3Weight = partial3Weight
+        self.masterScale = masterScale
+        self.chimesPerSec = chimesPerSec
+    }
+}
+
 public enum BreathRuntimeError: Error, Equatable {
     case missingBundle
     case evaluationFailed(String)
@@ -157,6 +188,48 @@ public final class BreathRuntime {
         )
     }
 
+    /// Read `TONE_DESIGN` from the JS core. Cached via `toneDesign` lazy var
+    /// for typical use; this method exists for symmetry with `preset(_:)`
+    /// and for tests that want to verify the round trip.
+    public func readToneDesign() throws -> ToneDesign {
+        guard let breathe = context.objectForKeyedSubscript("Breathe"),
+              let design = breathe.objectForKeyedSubscript("TONE_DESIGN"),
+              design.isObject else {
+            if let msg = takeException() {
+                throw BreathRuntimeError.evaluationFailed(msg)
+            }
+            throw BreathRuntimeError.unexpectedResponse
+        }
+        guard
+            let inhale = design.objectForKeyedSubscript("inhaleFreqHz")?.toDouble(),
+            let exhale = design.objectForKeyedSubscript("exhaleFreqHz")?.toDouble(),
+            let dur = design.objectForKeyedSubscript("chimeDurationSec")?.toDouble(),
+            let attack = design.objectForKeyedSubscript("attackSec")?.toDouble(),
+            let lambda = design.objectForKeyedSubscript("decayLambda")?.toDouble(),
+            let p2 = design.objectForKeyedSubscript("partial2Weight")?.toDouble(),
+            let p3 = design.objectForKeyedSubscript("partial3Weight")?.toDouble(),
+            let scale = design.objectForKeyedSubscript("masterScale")?.toDouble(),
+            let cps = design.objectForKeyedSubscript("chimesPerSec")?.toDouble()
+        else {
+            throw BreathRuntimeError.unexpectedResponse
+        }
+        return ToneDesign(
+            inhaleFreqHz: inhale, exhaleFreqHz: exhale, chimeDurationSec: dur,
+            attackSec: attack, decayLambda: lambda,
+            partial2Weight: p2, partial3Weight: p3,
+            masterScale: scale, chimesPerSec: cps
+        )
+    }
+
+    /// Cached canonical tone design. Computed once; cheap to reference.
+    public lazy var toneDesign: ToneDesign = {
+        do {
+            return try readToneDesign()
+        } catch {
+            fatalError("BreathRuntime.toneDesign: failed to read TONE_DESIGN: \(error)")
+        }
+    }()
+
     /// The canonical default config — `PRESETS.calm`, read once from the JS
     /// core. Used by app init when no saved settings exist. Cached after
     /// first read; cheap to reference repeatedly.
@@ -216,6 +289,28 @@ public final class SessionHandle {
 
     public func tick(nowMs: Double) -> [SessionEvent] {
         invoke("tick", arg: nowMs)
+    }
+
+    public func pause(nowMs: Double) {
+        _ = jsSession.invokeMethod("pause", withArguments: [nowMs])
+        _ = runtime.takeException()
+    }
+
+    public func resume(nowMs: Double) {
+        _ = jsSession.invokeMethod("resume", withArguments: [nowMs])
+        _ = runtime.takeException()
+    }
+
+    public var isPaused: Bool {
+        jsSession.objectForKeyedSubscript("isPaused")?.toBool() ?? false
+    }
+
+    /// Effective elapsed time in ms — wall clock with paused intervals
+    /// subtracted. Use for UI display; frozen while paused.
+    public func effectiveMs(nowMs: Double) -> Double {
+        let result = jsSession.invokeMethod("effectiveMs", withArguments: [nowMs])
+        _ = runtime.takeException()
+        return result?.toDouble() ?? 0
     }
 
     public func stop() {

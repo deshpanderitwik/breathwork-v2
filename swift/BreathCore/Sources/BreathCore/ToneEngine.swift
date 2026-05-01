@@ -1,16 +1,18 @@
 import AVFoundation
+import BreathRuntime
 
-/// Chime generation lifted from breathwork-v1/Sources/BreathEngine.swift.
-/// Fundamental + 2nd partial (×0.3) + 3rd partial (×0.1), 8ms linear attack,
-/// exp(-5.5·t) decay, overall scale ×0.25.
+/// AVAudioEngine-backed chime player.
 ///
-/// On iOS, we configure AVAudioSession for `.playback` so chimes continue
+/// Synthesis parameters (frequencies, partials, envelope) come from a
+/// `ToneDesign` injected at init — typically read from `BreathRuntime` so
+/// they match the JS-canonical TONE_DESIGN. Same numbers as the web side
+/// uses; same waveform produced.
+///
+/// On iOS, configures AVAudioSession for `.playback` so chimes continue
 /// with the screen locked (requires `UIBackgroundModes: audio` in Info.plist).
 public final class ToneEngine {
     private let sampleRate: Double = 44100
-    private let chimeDuration: Double = 0.6
-    private let inhaleFreq: Float = 392.0   // G4
-    private let exhaleFreq: Float = 587.33  // D5 (a fifth up)
+    private let design: ToneDesign
 
     private let engine = AVAudioEngine()
     private let player = AVAudioPlayerNode()
@@ -18,33 +20,38 @@ public final class ToneEngine {
     private var exhaleBuffer: AVAudioPCMBuffer!
     private var started = false
 
-    public init() {
+    public init(design: ToneDesign) {
+        self.design = design
         let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
         engine.attach(player)
         engine.connect(player, to: engine.mainMixerNode, format: format)
-        inhaleBuffer = makeChime(frequency: inhaleFreq)
-        exhaleBuffer = makeChime(frequency: exhaleFreq)
+        inhaleBuffer = makeChime(frequency: Float(design.inhaleFreqHz))
+        exhaleBuffer = makeChime(frequency: Float(design.exhaleFreqHz))
     }
 
     private func makeChime(frequency: Float) -> AVAudioPCMBuffer {
         let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
-        let frameCount = AVAudioFrameCount(chimeDuration * sampleRate)
+        let frameCount = AVAudioFrameCount(design.chimeDurationSec * sampleRate)
         let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
         buffer.frameLength = frameCount
 
         let data = buffer.floatChannelData![0]
         let sr = Float(sampleRate)
+        let attackTime = Float(design.attackSec)
+        let lambda = Float(design.decayLambda)
+        let p2 = Float(design.partial2Weight)
+        let p3 = Float(design.partial3Weight)
+        let scale = Float(design.masterScale)
 
         for i in 0..<Int(frameCount) {
             let t = Float(i) / sr
-            let attackTime: Float = 0.008
             let envelope: Float = t < attackTime
                 ? (t / attackTime)
-                : exp(-(t - attackTime) * 5.5)
+                : exp(-(t - attackTime) * lambda)
             let fundamental = sin(2.0 * .pi * frequency * t)
-            let partial2 = sin(2.0 * .pi * frequency * 2.0 * t) * 0.3
-            let partial3 = sin(2.0 * .pi * frequency * 3.0 * t) * 0.1
-            data[i] = (fundamental + partial2 + partial3) * envelope * 0.25
+            let partial2 = sin(2.0 * .pi * frequency * 2.0 * t) * p2
+            let partial3 = sin(2.0 * .pi * frequency * 3.0 * t) * p3
+            data[i] = (fundamental + partial2 + partial3) * envelope * scale
         }
         return buffer
     }
@@ -52,8 +59,6 @@ public final class ToneEngine {
     private func ensureStarted() {
         guard !started else { return }
         #if os(iOS)
-        // Keep playing when the screen locks. Requires background audio
-        // entitlement — see apps/ios Info.plist.
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(.playback, mode: .default, options: [])
         try? session.setActive(true, options: [])
@@ -78,7 +83,8 @@ public final class ToneEngine {
     }
 
     private func scheduleCounts(durationSec: Double, buffer: AVAudioPCMBuffer) {
-        let count = max(1, Int(durationSec.rounded()))
+        let count = max(1, Int((durationSec * design.chimesPerSec).rounded()))
+        let intervalSec = 1.0 / design.chimesPerSec
         guard let lastRender = player.lastRenderTime,
               let playerTime = player.playerTime(forNodeTime: lastRender) else {
             for _ in 0..<count {
@@ -90,7 +96,7 @@ public final class ToneEngine {
         let nowSample = playerTime.sampleTime
         for i in 0..<count {
             let at = AVAudioTime(
-                sampleTime: nowSample + AVAudioFramePosition(Double(i) * sr),
+                sampleTime: nowSample + AVAudioFramePosition(Double(i) * intervalSec * sr),
                 atRate: sr
             )
             player.scheduleBuffer(buffer, at: at, options: [], completionHandler: nil)
@@ -98,7 +104,10 @@ public final class ToneEngine {
     }
 
     public func fadeOut(fadeSec: Double) {
-        // Short chimes taper naturally via their exp decay — just flush the queue.
+        // Short chimes taper naturally via their exp decay — flush the queue.
+        // (`fadeSec` is currently unused; the buffer envelope handles the
+        // tail. Future work: tweenable mixer-volume ramp for explicit fades.)
+        _ = fadeSec
         player.stop()
         player.play()
     }

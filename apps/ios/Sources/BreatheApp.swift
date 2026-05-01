@@ -5,7 +5,7 @@ import BreathCore
 struct BreatheApp: App {
     @StateObject private var state: AppState
     private let store = SettingsStore()
-    private let tones = ToneEngine()
+    private let tones: ToneEngine
     private let runtime: BreathRuntime
     private let controller: SessionController
 
@@ -17,6 +17,7 @@ struct BreatheApp: App {
             fatalError("BreathRuntime failed to load: \(error)")
         }
         self.runtime = runtime
+        self.tones = ToneEngine(design: runtime.toneDesign)
 
         let store = SettingsStore()
         let loadedState = AppState(config: store.load(default: runtime.defaultConfig))

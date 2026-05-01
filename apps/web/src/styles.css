@@ -212,8 +212,33 @@ main {
   background: rgba(237, 237, 234, 0.5);
 }
 
-.stop {
+.controls {
   margin-top: 48px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.pause {
+  appearance: none;
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 10px 20px;
+  transition: border-color 120ms, color 120ms;
+}
+
+.pause:hover {
+  border-color: var(--fg);
+}
+
+.stop {
   appearance: none;
   border: none;
   background: transparent;

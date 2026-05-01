@@ -12,6 +12,9 @@ export {
   DEFAULT_FADE_OUT_SEC,
 } from "./tone-set.js";
 
+export type { ToneDesign } from "./tone-design.js";
+export { TONE_DESIGN } from "./tone-design.js";
+
 export type { PresetId } from "./presets.js";
 export { DEFAULT_PRESET, PRESETS } from "./presets.js";
 

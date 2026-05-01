@@ -128,12 +128,24 @@ export function createSession(config: SessionConfig): Session {
   let stopped = false;
   let queue: Array<{ atMs: number; event: SessionEvent }> = [];
   let cursor = 0;
+  // Pause arithmetic. While paused, effective time freezes at `pausedAtMs`
+  // (the nowMs passed to pause()). On resume, totalPausedMs accumulates the
+  // wall-clock duration of the pause, so subsequent ticks compute effective
+  // time as nowMs - totalPausedMs.
+  let pausedAtMs: number | null = null;
+  let totalPausedMs = 0;
+
+  function effectiveMs(nowMs: number): number {
+    if (pausedAtMs !== null) return pausedAtMs - totalPausedMs;
+    return nowMs - totalPausedMs;
+  }
 
   function drain(nowMs: number): readonly SessionEvent[] {
+    const effective = effectiveMs(nowMs);
     const events: SessionEvent[] = [];
     while (cursor < queue.length) {
       const entry = queue[cursor];
-      if (!entry || entry.atMs > nowMs) break;
+      if (!entry || entry.atMs > effective) break;
       cursor++;
       events.push(entry.event);
       if (entry.event.kind !== "round-complete") {
@@ -146,8 +158,10 @@ export function createSession(config: SessionConfig): Session {
   return {
     start(nowMs: number): readonly SessionEvent[] {
       if (stopped) return [];
-      queue = buildSchedule(config, nowMs, totalDurationSec);
+      queue = buildSchedule(config, 0, totalDurationSec);
       cursor = 0;
+      pausedAtMs = null;
+      totalPausedMs = nowMs; // so effective time starts at 0 regardless of nowMs
       return drain(nowMs);
     },
 
@@ -156,14 +170,34 @@ export function createSession(config: SessionConfig): Session {
       return drain(nowMs);
     },
 
+    pause(nowMs: number): void {
+      if (stopped || pausedAtMs !== null) return;
+      pausedAtMs = nowMs;
+    },
+
+    resume(nowMs: number): void {
+      if (stopped || pausedAtMs === null) return;
+      totalPausedMs += nowMs - pausedAtMs;
+      pausedAtMs = null;
+    },
+
     stop(): void {
       stopped = true;
       phase = { kind: "idle" };
       queue = [];
+      pausedAtMs = null;
+    },
+
+    effectiveMs(nowMs: number): number {
+      return effectiveMs(nowMs);
     },
 
     get phase() {
       return phase;
+    },
+
+    get isPaused() {
+      return pausedAtMs !== null;
     },
 
     get totalDurationSec() {

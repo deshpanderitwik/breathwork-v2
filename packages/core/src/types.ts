@@ -75,23 +75,47 @@ export type SessionEvent =
  *   const s = createSession(config);
  *   s.start(nowMs)       // returns initial events (e.g. inhale-start for round 1)
  *   s.tick(nowMs)        // called on a loop; returns events to fire "now"
- *   s.stop()             // aborts early; no further events
+ *   s.pause(nowMs)       // freeze effective time; no further events fire
+ *   s.resume(nowMs)      // unfreeze; events scheduled for "now" or earlier fire
+ *   s.stop()             // abort; no further events
  *
  * The state machine is pure and deterministic: given the same config and the
- * same sequence of tick timestamps, it will always emit the same events.
+ * same sequence of tick timestamps (with pause/resume calls in fixed places),
+ * it always emits the same events at the same effective timestamps.
+ *
+ * Pause arithmetic lives here, not in hosts. Hosts pass strictly monotonic
+ * `nowMs` (e.g. `performance.now() - startPerfMs` on web) and call
+ * `pause()` / `resume()` at user gestures. The TS engine internally tracks
+ * total paused time and freezes the queue cursor while paused.
  */
 export interface Session {
   /** Start the session. Returns the events fired at t=0 (typically an inhale-start). */
   start(nowMs: number): readonly SessionEvent[];
 
-  /** Advance time. Returns events to fire at or before nowMs. */
+  /** Advance time. Returns events to fire at or before effective time. */
   tick(nowMs: number): readonly SessionEvent[];
 
-  /** Abort the session. Idempotent. No further events will be emitted. */
+  /** Pause: freeze effective time. Idempotent — no-op if already paused or stopped. */
+  pause(nowMs: number): void;
+
+  /** Resume: unfreeze. Idempotent — no-op if not paused or stopped. */
+  resume(nowMs: number): void;
+
+  /** Abort. Idempotent. No further events will be emitted. */
   stop(): void;
 
   /** Current phase. Read-only snapshot. */
   readonly phase: Phase;
+
+  /** True while paused (between pause() and resume()). */
+  readonly isPaused: boolean;
+
+  /**
+   * Effective elapsed time in ms — wall clock with paused intervals subtracted.
+   * Hosts use this for UI (timeline progress, "Round N of M" derivations).
+   * Returns the frozen value while paused.
+   */
+  effectiveMs(nowMs: number): number;
 
   /** Total duration of a completed session in seconds, given the config. */
   readonly totalDurationSec: number;

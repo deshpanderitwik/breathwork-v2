@@ -79,6 +79,7 @@ let rafHandle: number | null = null;
 // tab is backgrounded and rAF is paused, so audio events still dispatch.
 let intervalHandle: number | null = null;
 let sessionStartPerfMs = 0;
+let isPaused = false;
 let currentPhaseLabel = "";
 let currentRound = 1;
 
@@ -216,16 +217,29 @@ function renderSession(): HTMLElement {
     timeline.appendChild(rest);
   }
 
+  const controls = document.createElement("div");
+  controls.className = "controls";
+
+  const pauseBtn = document.createElement("button");
+  pauseBtn.type = "button";
+  pauseBtn.className = "pause";
+  pauseBtn.id = "pause-btn";
+  pauseBtn.textContent = isPaused ? "Resume" : "Pause";
+  pauseBtn.addEventListener("click", onPauseResume);
+
   const stop = document.createElement("button");
   stop.type = "button";
   stop.className = "stop";
   stop.textContent = "Stop";
   stop.addEventListener("click", onStop);
 
+  controls.appendChild(pauseBtn);
+  controls.appendChild(stop);
+
   wrap.appendChild(phase);
   wrap.appendChild(round);
   wrap.appendChild(timeline);
-  wrap.appendChild(stop);
+  wrap.appendChild(controls);
 
   return wrap;
 }
@@ -257,8 +271,10 @@ function updateTimeline(elapsedMs: number): void {
 function updateSessionUI(): void {
   const phaseEl = document.getElementById("phase");
   const roundEl = document.getElementById("round");
-  if (phaseEl) phaseEl.textContent = currentPhaseLabel;
+  const pauseBtnEl = document.getElementById("pause-btn");
+  if (phaseEl) phaseEl.textContent = isPaused ? "Paused" : currentPhaseLabel;
   if (roundEl) roundEl.textContent = `Round ${currentRound} of ${config.rounds}`;
+  if (pauseBtnEl) pauseBtnEl.textContent = isPaused ? "Resume" : "Pause";
 }
 
 function updateDurationLabel(): void {
@@ -293,6 +309,7 @@ function onStart(): void {
     console.error("[breathe] tones init failed", err);
   }
   view = "session";
+  isPaused = false;
   currentPhaseLabel = "";
   currentRound = 1;
   render();
@@ -304,9 +321,10 @@ function onStart(): void {
   const tick = () => {
     if (!session) return;
     const nowMs = performance.now() - sessionStartPerfMs;
+    // session.effectiveMs() freezes during pause — timeline halts cleanly.
+    updateTimeline(session.effectiveMs(nowMs));
     const events = session.tick(nowMs);
     if (events.length > 0) handleEvents(events);
-    updateTimeline(nowMs);
   };
   const rafLoop = () => {
     tick();
@@ -315,6 +333,20 @@ function onStart(): void {
   rafHandle = requestAnimationFrame(rafLoop);
   // Fallback driver for backgrounded tabs where rAF pauses.
   intervalHandle = window.setInterval(tick, 500);
+}
+
+function onPauseResume(): void {
+  if (!session) return;
+  const nowMs = performance.now() - sessionStartPerfMs;
+  if (isPaused) {
+    session.resume(nowMs);
+    isPaused = false;
+  } else {
+    session.pause(nowMs);
+    tones?.fadeOut({ fadeSec: 0.05 });
+    isPaused = true;
+  }
+  updateSessionUI();
 }
 
 function onStop(): void {

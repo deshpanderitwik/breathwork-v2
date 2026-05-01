@@ -12,7 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private let runtime: BreathRuntime
     private let store = SettingsStore()
-    private let tones = ToneEngine()
+    private let tones: ToneEngine
     private let state: AppState
     private lazy var controller = SessionController(state: state, tones: tones, runtime: runtime)
 
@@ -24,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } catch {
             fatalError("BreathRuntime failed to load: \(error)")
         }
+        self.tones = ToneEngine(design: runtime.toneDesign)
         self.state = AppState(config: store.load(default: runtime.defaultConfig))
         super.init()
     }
@@ -39,11 +40,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         popover = NSPopover()
         popover.behavior = .transient
-        popover.contentSize = NSSize(width: 300, height: 380)
+        popover.contentSize = NSSize(width: 300, height: 420)
         popover.contentViewController = NSHostingController(
-            rootView: MacPopoverView(state: state, onConfigChange: { [weak self] new in
-                self?.store.save(new)
-            })
+            rootView: MacPopoverView(
+                state: state,
+                onPauseToggle: { [weak self] in
+                    guard let self = self else { return }
+                    if self.state.isPaused { self.controller.resume() }
+                    else { self.controller.pause() }
+                },
+                onConfigChange: { [weak self] new in
+                    self?.store.save(new)
+                }
+            )
         )
 
         // Keep the status item icon in sync with running state.
@@ -92,6 +101,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 private struct MacPopoverView: View {
     @ObservedObject var state: AppState
+    let onPauseToggle: () -> Void
     let onConfigChange: (SessionConfig) -> Void
 
     var body: some View {
@@ -107,8 +117,9 @@ private struct MacPopoverView: View {
 
             if state.isRunning {
                 VStack(spacing: 10) {
-                    Text(state.currentPhase.isEmpty ? " " : state.currentPhase)
+                    Text(phaseLabel)
                         .font(.system(size: 20, weight: .light))
+                        .opacity(state.isPaused ? 0.5 : 1.0)
                     Text("Round \(state.currentRound) of \(state.config.rounds)")
                         .font(.system(size: 10, weight: .medium))
                         .kerning(1.0)
@@ -118,6 +129,22 @@ private struct MacPopoverView: View {
                         .frame(height: 6)
                         .padding(.horizontal, 14)
                         .padding(.top, 4)
+                        .opacity(state.isPaused ? 0.5 : 1.0)
+                    Button(action: onPauseToggle) {
+                        Text(state.isPaused ? "Resume" : "Pause")
+                            .font(.system(size: 11, weight: .medium))
+                            .kerning(1.2)
+                            .textCase(.uppercase)
+                            .foregroundColor(.primary)
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 6)
+                    }
+                    .buttonStyle(.plain)
+                    .background(
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(Color.primary.opacity(0.25), lineWidth: 1)
+                    )
+                    .padding(.top, 4)
                 }
                 .padding(.top, 16)
                 .padding(.bottom, 12)
@@ -131,5 +158,10 @@ private struct MacPopoverView: View {
             ))
         }
         .frame(width: 300)
+    }
+
+    private var phaseLabel: String {
+        if state.isPaused { return "Paused" }
+        return state.currentPhase.isEmpty ? " " : state.currentPhase
     }
 }

@@ -127,3 +127,59 @@ describe("session event sequence (Phase 1)", () => {
     }
   });
 });
+
+describe("session pause / resume", () => {
+  it("isPaused reflects pause/resume state", () => {
+    const s = createSession(PRESETS.calm);
+    expect(s.isPaused).toBe(false);
+    s.start(0);
+    expect(s.isPaused).toBe(false);
+    s.pause(1000);
+    expect(s.isPaused).toBe(true);
+    s.resume(2000);
+    expect(s.isPaused).toBe(false);
+  });
+
+  it("emits no new events while paused", () => {
+    const s = createSession(PRESETS.calm);
+    s.start(0);
+    s.tick(3000); // before exhale at t=4000
+    s.pause(3500);
+    // Tick repeatedly during pause; no events should fire even though wall
+    // clock time advances past the next event's effective time.
+    expect(s.tick(5000)).toEqual([]);
+    expect(s.tick(10000)).toEqual([]);
+    expect(s.tick(50000)).toEqual([]);
+  });
+
+  it("shifts subsequent events by the pause duration on resume", () => {
+    const s = createSession(PRESETS.calm);
+    const initial = s.start(0); // [inhale-start@0]
+    expect(initial[0]?.kind).toBe("inhale-start");
+
+    // Pause at wall time 3000; exhale would have fired at effective t=4000.
+    s.pause(3000);
+    // Resume 5000ms later (wall time 8000). Effective time since start
+    // is now 8000 - 5000 = 3000. Still before exhale.
+    s.resume(8000);
+    expect(s.tick(8500)).toEqual([]); // effective 3500, still before 4000
+
+    // Tick at wall 9000 → effective 4000 → exhale-start fires.
+    const events = s.tick(9000);
+    expect(events.length).toBe(1);
+    expect(events[0]?.kind).toBe("exhale-start");
+  });
+
+  it("pause/resume are idempotent and safe before start or after stop", () => {
+    const s = createSession(PRESETS.calm);
+    expect(() => s.pause(0)).not.toThrow();
+    expect(() => s.resume(0)).not.toThrow();
+    s.start(0);
+    s.pause(1000);
+    s.pause(2000); // already paused — no-op
+    expect(s.isPaused).toBe(true);
+    s.stop();
+    expect(() => s.pause(3000)).not.toThrow();
+    expect(() => s.resume(4000)).not.toThrow();
+  });
+});

@@ -1,12 +1,14 @@
 import Foundation
 import BreathRuntime
 
-/// Wires the JS-backed BreathRuntime + ToneEngine + AppState together. Starts
-/// the session, drives ticks on a timer, translates events into tone calls
-/// and UI state mutations, and cleans up on stop.
+/// Wires the JS-backed BreathRuntime + ToneEngine + AppState together.
+/// Starts the session, drives ticks on a timer, translates events into tone
+/// calls and UI state mutations, and cleans up on stop.
 ///
-/// Both macOS (menu bar) and iOS (screen) use this — they differ only in
-/// how they present the state.
+/// Pause arithmetic lives in the JS engine. The controller only tracks a
+/// single `sessionStart` Date used to compute strictly-monotonic `nowMs`
+/// values to hand to `session.tick / pause / resume`. UI elapsed time comes
+/// from `session.effectiveMs(nowMs:)`, which freezes during pause.
 public final class SessionController {
     private let state: AppState
     private let tones: ToneEngine
@@ -14,11 +16,9 @@ public final class SessionController {
     private var session: SessionHandle?
     private var tickTimer: Timer?
 
-    /// Real wall-clock time when the current session (re)started. We derive
-    /// elapsed by subtracting this from Date() and adding `accumulatedMs`
-    /// (which holds the frozen elapsed from prior paused runs).
-    private var segmentStart = Date()
-    private var accumulatedMs: Double = 0
+    /// Wall-clock anchor for the current session — set on start, used to
+    /// compute the monotonic `nowMs` argument for every JS call below.
+    private var sessionStart = Date()
 
     public init(state: AppState, tones: ToneEngine, runtime: BreathRuntime) {
         self.state = state
@@ -51,8 +51,7 @@ public final class SessionController {
         state.elapsedMs = 0
         state.currentPhase = ""
         state.currentRound = 1
-        accumulatedMs = 0
-        segmentStart = Date()
+        sessionStart = Date()
 
         let initial = session?.start(nowMs: 0) ?? []
         handle(events: initial)
@@ -61,21 +60,18 @@ public final class SessionController {
 
     public func pause() {
         guard state.isRunning, !state.isPaused else { return }
-        accumulatedMs += Date().timeIntervalSince(segmentStart) * 1000
-        state.elapsedMs = accumulatedMs
-        tickTimer?.invalidate()
-        tickTimer = nil
-        // Clear any already-scheduled chimes so the next count doesn't leak
-        // through during the pause.
-        tones.fadeOut(fadeSec: 0.05)
+        let now = Date().timeIntervalSince(sessionStart) * 1000
+        session?.pause(nowMs: now)
         state.isPaused = true
+        // Silence any chimes already scheduled past the freeze point.
+        tones.fadeOut(fadeSec: 0.05)
     }
 
     public func resume() {
         guard state.isRunning, state.isPaused else { return }
-        segmentStart = Date()
+        let now = Date().timeIntervalSince(sessionStart) * 1000
+        session?.resume(nowMs: now)
         state.isPaused = false
-        startTicker()
     }
 
     public func stop() {
@@ -87,7 +83,7 @@ public final class SessionController {
         state.isRunning = false
         state.isPaused = false
         state.currentPhase = ""
-        accumulatedMs = 0
+        state.elapsedMs = 0
     }
 
     private func startTicker() {
@@ -97,10 +93,10 @@ public final class SessionController {
     }
 
     private func tick() {
-        guard let session = session, !state.isPaused else { return }
-        let elapsedMs = accumulatedMs + Date().timeIntervalSince(segmentStart) * 1000
-        state.elapsedMs = elapsedMs
-        let events = session.tick(nowMs: elapsedMs)
+        guard let session = session else { return }
+        let now = Date().timeIntervalSince(sessionStart) * 1000
+        state.elapsedMs = session.effectiveMs(nowMs: now)
+        let events = session.tick(nowMs: now)
         if !events.isEmpty { handle(events: events) }
     }
 

@@ -29,6 +29,25 @@ final class BreathRuntimeTests: XCTestCase {
         XCTAssertEqual(runtime.defaultConfig, try runtime.preset("calm"))
     }
 
+    func testReadsToneDesignFromJS() throws {
+        let runtime = try BreathRuntime()
+        let design = try runtime.readToneDesign()
+        XCTAssertEqual(design.inhaleFreqHz, 392.0)
+        XCTAssertEqual(design.exhaleFreqHz, 329.63)
+        XCTAssertEqual(design.chimeDurationSec, 0.6)
+        XCTAssertEqual(design.attackSec, 0.008)
+        XCTAssertEqual(design.decayLambda, 5.5)
+        XCTAssertEqual(design.partial2Weight, 0.3)
+        XCTAssertEqual(design.partial3Weight, 0.1)
+        XCTAssertEqual(design.masterScale, 0.25)
+        XCTAssertEqual(design.chimesPerSec, 1.0)
+    }
+
+    func testToneDesignCachedAccessorMatchesReader() throws {
+        let runtime = try BreathRuntime()
+        XCTAssertEqual(runtime.toneDesign, try runtime.readToneDesign())
+    }
+
     func testRejectsUnknownPreset() throws {
         let runtime = try BreathRuntime()
         XCTAssertThrowsError(try runtime.preset("nonexistent"))
@@ -79,6 +98,49 @@ final class BreathRuntimeTests: XCTestCase {
         }
         let totalMs = Double(Self.calm.rounds) * (Self.calm.activeSec + Self.calm.restSec) * 1000
         XCTAssertEqual(atMs, totalMs)
+    }
+
+    func testPauseAndResumeShiftEffectiveTime() throws {
+        let runtime = try BreathRuntime()
+        let session = try runtime.createSession(config: Self.calm)
+        let initial = session.start(nowMs: 0)
+        XCTAssertEqual(initial.count, 1)
+        XCTAssertFalse(session.isPaused)
+
+        // Pause at 3s wall time (before the 4s exhale).
+        session.pause(nowMs: 3000)
+        XCTAssertTrue(session.isPaused)
+        XCTAssertEqual(session.tick(nowMs: 50000), [], "no events while paused")
+
+        // Resume 5s later. Effective time at wall 8000 = 3000.
+        session.resume(nowMs: 8000)
+        XCTAssertFalse(session.isPaused)
+        XCTAssertEqual(session.tick(nowMs: 8500), [], "still before effective 4000")
+
+        let events = session.tick(nowMs: 9000)
+        XCTAssertEqual(events.count, 1)
+        if case let .exhaleStart(round, durationSec, _) = events.first {
+            XCTAssertEqual(round, 1)
+            XCTAssertEqual(durationSec, 6)
+        } else {
+            XCTFail("expected exhale-start after resume")
+        }
+    }
+
+    func testPauseResumeAreIdempotent() throws {
+        let runtime = try BreathRuntime()
+        let session = try runtime.createSession(config: Self.calm)
+        // Safe before start.
+        session.pause(nowMs: 0)
+        session.resume(nowMs: 0)
+        session.start(nowMs: 0)
+        session.pause(nowMs: 1000)
+        session.pause(nowMs: 2000) // double-pause: no-op
+        XCTAssertTrue(session.isPaused)
+        session.stop()
+        // Safe after stop.
+        session.pause(nowMs: 3000)
+        session.resume(nowMs: 4000)
     }
 
     func testRestStartFadeIsAtLeastOneSecond() throws {
