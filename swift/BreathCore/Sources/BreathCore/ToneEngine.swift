@@ -72,35 +72,18 @@ public final class ToneEngine {
         }
     }
 
-    public func playInhale(durationSec: Double) {
+    /// Play one inhale chime starting now. Single-shot — count granularity
+    /// lives in the state machine (one inhale-count event = one call here),
+    /// so pause/resume cancels nothing because nothing is queued past now.
+    public func playInhaleChime() {
         ensureStarted()
-        scheduleCounts(durationSec: durationSec, buffer: inhaleBuffer)
+        player.scheduleBuffer(inhaleBuffer, at: nil, options: [], completionHandler: nil)
     }
 
-    public func playExhale(durationSec: Double) {
+    /// Play one exhale chime starting now. Single-shot.
+    public func playExhaleChime() {
         ensureStarted()
-        scheduleCounts(durationSec: durationSec, buffer: exhaleBuffer)
-    }
-
-    private func scheduleCounts(durationSec: Double, buffer: AVAudioPCMBuffer) {
-        let count = max(1, Int((durationSec * design.chimesPerSec).rounded()))
-        let intervalSec = 1.0 / design.chimesPerSec
-        guard let lastRender = player.lastRenderTime,
-              let playerTime = player.playerTime(forNodeTime: lastRender) else {
-            for _ in 0..<count {
-                player.scheduleBuffer(buffer, at: nil, options: [], completionHandler: nil)
-            }
-            return
-        }
-        let sr = playerTime.sampleRate
-        let nowSample = playerTime.sampleTime
-        for i in 0..<count {
-            let at = AVAudioTime(
-                sampleTime: nowSample + AVAudioFramePosition(Double(i) * intervalSec * sr),
-                atRate: sr
-            )
-            player.scheduleBuffer(buffer, at: at, options: [], completionHandler: nil)
-        }
+        player.scheduleBuffer(exhaleBuffer, at: nil, options: [], completionHandler: nil)
     }
 
     public func fadeOut(fadeSec: Double) {

@@ -39,15 +39,26 @@ export type Phase =
  */
 export type SessionEvent =
   | {
-      kind: "inhale-start";
+      /**
+       * Fired once per count-second of an inhale. `beatIndex` is 0-based
+       * within the current inhale; `beatIndex === 0` means we just entered
+       * an inhale phase (UI uses this to swap the phase label).
+       *
+       * One event = one chime. Audio plays a single inhale chime per event
+       * with no internal scheduling — pause/resume just works.
+       */
+      kind: "inhale-count";
       round: number;
-      durationSec: number;
+      beatIndex: number;
+      beatsInPhase: number;
       atMs: number;
     }
   | {
-      kind: "exhale-start";
+      /** As above, but for exhale. `beatIndex === 0` means start of exhale. */
+      kind: "exhale-count";
       round: number;
-      durationSec: number;
+      beatIndex: number;
+      beatsInPhase: number;
       atMs: number;
     }
   | {

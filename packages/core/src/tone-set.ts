@@ -20,14 +20,19 @@
  *   - Different ToneSet implementations can deliver different tone palettes.
  */
 export interface ToneSet {
-  /** Begin an inhale tone that should complete in `durationSec`. */
-  playInhale(params: { durationSec: number }): void;
+  /**
+   * Play one inhale chime starting now. Single-shot — the state machine
+   * emits one count event per beat and the engine plays one chime per
+   * event. Pause/resume "just works" because there's nothing queued past
+   * the moment of the call.
+   */
+  playInhaleChime(): void;
 
-  /** Begin an exhale tone that should complete in `durationSec`. */
-  playExhale(params: { durationSec: number }): void;
+  /** Play one exhale chime starting now. Single-shot. */
+  playExhaleChime(): void;
 
   /**
-   * Gracefully fade the currently-playing tone out.
+   * Gracefully fade any currently-ringing tone out.
    * Used at active → rest boundaries so silence arrives intentionally.
    */
   fadeOut(params: { fadeSec: number }): void;

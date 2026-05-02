@@ -73,16 +73,13 @@ describe("createSession validation", () => {
 });
 
 /**
- * PHASE 1 TARGET — these are currently expected to fail against the stub.
- * They define the exact event sequence a correct implementation must produce.
- *
- * Un-skip these tests as Phase 1 lands. They encode:
- *   - One inhale-start and one exhale-start per breath cycle
- *   - rest-start emitted at each active→rest boundary, with fadeOutSec >= 1
- *   - round-complete emitted at the end of each rest phase
- *   - session-complete emitted exactly once, at total duration
+ * Event sequence: one count event per beat (1 chime/sec).
+ * For Calm (4/6/90/30/4): each round has 9 cycles, each cycle has
+ * 4 inhale-counts + 6 exhale-counts = 10 counts/cycle.
+ * Per round: 36 inhale-counts + 54 exhale-counts.
+ * Across 4 rounds: 144 inhale-counts + 216 exhale-counts.
  */
-describe("session event sequence (Phase 1)", () => {
+describe("session event sequence", () => {
   it("Calm preset emits the expected number of each event kind", () => {
     const { events } = runSession(PRESETS.calm);
     const kinds = events.reduce<Record<string, number>>((acc, e) => {
@@ -90,23 +87,22 @@ describe("session event sequence (Phase 1)", () => {
       return acc;
     }, {});
 
-    // 90s active / (4 + 6)s per cycle = 9 full breath cycles per round.
-    // 4 rounds × 9 = 36 inhales, 36 exhales.
-    expect(kinds["inhale-start"]).toBe(36);
-    expect(kinds["exhale-start"]).toBe(36);
+    expect(kinds["inhale-count"]).toBe(144);
+    expect(kinds["exhale-count"]).toBe(216);
     expect(kinds["rest-start"]).toBe(4);
     expect(kinds["round-complete"]).toBe(4);
     expect(kinds["session-complete"]).toBe(1);
   });
 
-  it("starts with an inhale-start at atMs=0 for round 1", () => {
+  it("starts with an inhale-count(beatIndex=0) at atMs=0 for round 1", () => {
     const { events } = runSession(PRESETS.calm);
     const first = events[0];
-    expect(first?.kind).toBe("inhale-start");
-    if (first?.kind === "inhale-start") {
+    expect(first?.kind).toBe("inhale-count");
+    if (first?.kind === "inhale-count") {
       expect(first.round).toBe(1);
       expect(first.atMs).toBe(0);
-      expect(first.durationSec).toBe(4);
+      expect(first.beatIndex).toBe(0);
+      expect(first.beatsInPhase).toBe(4);
     }
   });
 
@@ -142,9 +138,9 @@ describe("session pause / resume", () => {
 
   it("emits no new events while paused", () => {
     const s = createSession(PRESETS.calm);
-    s.start(0);
-    s.tick(3000); // before exhale at t=4000
-    s.pause(3500);
+    s.start(0); // initial event(s) at t=0
+    s.tick(3500); // somewhere in the middle of the first inhale
+    s.pause(3700);
     // Tick repeatedly during pause; no events should fire even though wall
     // clock time advances past the next event's effective time.
     expect(s.tick(5000)).toEqual([]);
@@ -154,20 +150,29 @@ describe("session pause / resume", () => {
 
   it("shifts subsequent events by the pause duration on resume", () => {
     const s = createSession(PRESETS.calm);
-    const initial = s.start(0); // [inhale-start@0]
-    expect(initial[0]?.kind).toBe("inhale-start");
+    const initial = s.start(0); // [inhale-count(beatIndex=0)@0]
+    expect(initial[0]?.kind).toBe("inhale-count");
 
-    // Pause at wall time 3000; exhale would have fired at effective t=4000.
-    s.pause(3000);
-    // Resume 5000ms later (wall time 8000). Effective time since start
-    // is now 8000 - 5000 = 3000. Still before exhale.
-    s.resume(8000);
-    expect(s.tick(8500)).toEqual([]); // effective 3500, still before 4000
+    // Drain inhale-counts at t=1000, 2000, 3000 before pausing so the
+    // cursor is at the next pending event (the t=4000 exhale-count).
+    s.tick(3500);
 
-    // Tick at wall 9000 → effective 4000 → exhale-start fires.
-    const events = s.tick(9000);
-    expect(events.length).toBe(1);
-    expect(events[0]?.kind).toBe("exhale-start");
+    // Pause at wall 3500; the first exhale-count is due at effective 4000.
+    s.pause(3500);
+    // Resume 5000ms later (wall time 8500). Effective time since start
+    // is now 8500 - 5000 = 3500. Still before 4000.
+    s.resume(8500);
+    expect(s.tick(8900)).toEqual([]); // effective 3900, still before 4000
+
+    // Tick at wall 9001 → effective 4001 → exhale-count(beatIndex=0) fires.
+    const events = s.tick(9001);
+    expect(events.length).toBeGreaterThanOrEqual(1);
+    const first = events[0];
+    expect(first?.kind).toBe("exhale-count");
+    if (first?.kind === "exhale-count") {
+      expect(first.beatIndex).toBe(0);
+      expect(first.beatsInPhase).toBe(6);
+    }
   });
 
   it("pause/resume are idempotent and safe before start or after stop", () => {

@@ -32,8 +32,12 @@ public struct SessionConfig: Codable, Sendable, Equatable {
 }
 
 public enum SessionEvent: Sendable, Equatable {
-    case inhaleStart(round: Int, durationSec: Double, atMs: Double)
-    case exhaleStart(round: Int, durationSec: Double, atMs: Double)
+    /// Fires once per count-second of an inhale. `beatIndex == 0` means
+    /// "phase just started" (UI uses this to swap the label).
+    /// One event = one chime.
+    case inhaleCount(round: Int, beatIndex: Int, beatsInPhase: Int, atMs: Double)
+    /// As above, for exhale.
+    case exhaleCount(round: Int, beatIndex: Int, beatsInPhase: Int, atMs: Double)
     case restStart(round: Int, durationSec: Double, fadeOutSec: Double, atMs: Double)
     case roundComplete(round: Int, atMs: Double)
     case sessionComplete(atMs: Double)
@@ -42,16 +46,20 @@ public enum SessionEvent: Sendable, Equatable {
         guard jsValue.isObject,
               let kind = jsValue.forProperty("kind")?.toString() else { return nil }
         switch kind {
-        case "inhale-start":
+        case "inhale-count":
             guard let round = jsValue.forProperty("round")?.toInt32(),
-                  let dur = jsValue.forProperty("durationSec")?.toDouble(),
+                  let beat = jsValue.forProperty("beatIndex")?.toInt32(),
+                  let total = jsValue.forProperty("beatsInPhase")?.toInt32(),
                   let at = jsValue.forProperty("atMs")?.toDouble() else { return nil }
-            self = .inhaleStart(round: Int(round), durationSec: dur, atMs: at)
-        case "exhale-start":
+            self = .inhaleCount(round: Int(round), beatIndex: Int(beat),
+                                beatsInPhase: Int(total), atMs: at)
+        case "exhale-count":
             guard let round = jsValue.forProperty("round")?.toInt32(),
-                  let dur = jsValue.forProperty("durationSec")?.toDouble(),
+                  let beat = jsValue.forProperty("beatIndex")?.toInt32(),
+                  let total = jsValue.forProperty("beatsInPhase")?.toInt32(),
                   let at = jsValue.forProperty("atMs")?.toDouble() else { return nil }
-            self = .exhaleStart(round: Int(round), durationSec: dur, atMs: at)
+            self = .exhaleCount(round: Int(round), beatIndex: Int(beat),
+                                beatsInPhase: Int(total), atMs: at)
         case "rest-start":
             guard let round = jsValue.forProperty("round")?.toInt32(),
                   let dur = jsValue.forProperty("durationSec")?.toDouble(),
@@ -72,8 +80,8 @@ public enum SessionEvent: Sendable, Equatable {
 
     public var atMs: Double {
         switch self {
-        case .inhaleStart(_, _, let t),
-             .exhaleStart(_, _, let t),
+        case .inhaleCount(_, _, _, let t),
+             .exhaleCount(_, _, _, let t),
              .restStart(_, _, _, let t),
              .roundComplete(_, let t),
              .sessionComplete(let t):

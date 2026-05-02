@@ -65,14 +65,20 @@ final class ContractFixtureTests: XCTestCase {
 private struct FixtureEvent: Codable, Equatable {
     let kind: String
     let round: Int?
+    let beatIndex: Int?
+    let beatsInPhase: Int?
     let durationSec: Double?
     let fadeOutSec: Double?
     let atMs: Double
 
-    init(kind: String, round: Int? = nil, durationSec: Double? = nil,
-         fadeOutSec: Double? = nil, atMs: Double) {
+    init(kind: String, round: Int? = nil,
+         beatIndex: Int? = nil, beatsInPhase: Int? = nil,
+         durationSec: Double? = nil, fadeOutSec: Double? = nil,
+         atMs: Double) {
         self.kind = kind
         self.round = round
+        self.beatIndex = beatIndex
+        self.beatsInPhase = beatsInPhase
         self.durationSec = durationSec
         self.fadeOutSec = fadeOutSec
         self.atMs = atMs
@@ -80,13 +86,15 @@ private struct FixtureEvent: Codable, Equatable {
 
     init(_ event: SessionEvent) {
         switch event {
-        case let .inhaleStart(round, dur, at):
-            self.init(kind: "inhale-start", round: round, durationSec: dur, atMs: at)
-        case let .exhaleStart(round, dur, at):
-            self.init(kind: "exhale-start", round: round, durationSec: dur, atMs: at)
+        case let .inhaleCount(round, beat, total, at):
+            self.init(kind: "inhale-count", round: round,
+                      beatIndex: beat, beatsInPhase: total, atMs: at)
+        case let .exhaleCount(round, beat, total, at):
+            self.init(kind: "exhale-count", round: round,
+                      beatIndex: beat, beatsInPhase: total, atMs: at)
         case let .restStart(round, dur, fade, at):
-            self.init(kind: "rest-start", round: round, durationSec: dur,
-                      fadeOutSec: fade, atMs: at)
+            self.init(kind: "rest-start", round: round,
+                      durationSec: dur, fadeOutSec: fade, atMs: at)
         case let .roundComplete(round, at):
             self.init(kind: "round-complete", round: round, atMs: at)
         case let .sessionComplete(at):

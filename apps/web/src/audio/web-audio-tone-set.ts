@@ -11,9 +11,10 @@
  *   Linear attack over `attackSec`, then exp(-decayLambda · t) decay
  *   Final scale × `masterScale` for headroom
  *
- * Each call to playInhale/playExhale schedules N chimes one second apart,
- * counting out the breath. Scheduling is sample-accurate against
- * AudioContext.currentTime — no JS-timer jitter.
+ * Single-shot: each playInhaleChime/playExhaleChime call schedules ONE
+ * chime at "now." The state machine emits one count event per beat, so
+ * count granularity lives upstream — pause cancels nothing because nothing
+ * is queued past the moment of the call.
  */
 
 import { TONE_DESIGN, type ToneDesign, type ToneSet } from "@breathe/core";
@@ -43,16 +44,14 @@ class WebAudioToneSet implements ToneSet {
   // Public interface
   // ---------------------------------------------------------------------------
 
-  playInhale({ durationSec }: { durationSec: number }): void {
-    this._cancelActive();
+  playInhaleChime(): void {
     this._resetMasterGain();
-    this._scheduleCounts(durationSec, this.inhaleBuffer);
+    this._schedulePlayAt(this.inhaleBuffer, this.context.currentTime);
   }
 
-  playExhale({ durationSec }: { durationSec: number }): void {
-    this._cancelActive();
+  playExhaleChime(): void {
     this._resetMasterGain();
-    this._scheduleCounts(durationSec, this.exhaleBuffer);
+    this._schedulePlayAt(this.exhaleBuffer, this.context.currentTime);
   }
 
   fadeOut({ fadeSec }: { fadeSec: number }): void {
@@ -119,19 +118,6 @@ class WebAudioToneSet implements ToneSet {
     return buffer;
   }
 
-  /**
-   * Schedule one chime per second across `durationSec`.
-   * A 4-second inhale → 4 chimes at t=0, 1, 2, 3.
-   */
-  private _scheduleCounts(durationSec: number, buffer: AudioBuffer): void {
-    const count = Math.max(1, Math.round(durationSec * TONE_DESIGN.chimesPerSec));
-    const now = this.context.currentTime;
-    const interval = 1 / TONE_DESIGN.chimesPerSec;
-    for (let i = 0; i < count; i++) {
-      this._schedulePlayAt(buffer, now + i * interval);
-    }
-  }
-
   private _schedulePlayAt(buffer: AudioBuffer, startAt: number): void {
     const source = this.context.createBufferSource();
     source.buffer = buffer;
@@ -144,19 +130,6 @@ class WebAudioToneSet implements ToneSet {
     };
 
     this.activeVoices.push({ source });
-  }
-
-  private _cancelActive(): void {
-    const voices = this.activeVoices.slice();
-    this.activeVoices = [];
-    for (const { source } of voices) {
-      try {
-        source.stop();
-      } catch {
-        // Already stopped.
-      }
-      source.disconnect();
-    }
   }
 
   private _resetMasterGain(): void {

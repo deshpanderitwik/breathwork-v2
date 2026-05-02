@@ -74,8 +74,9 @@ final class BreathRuntimeTests: XCTestCase {
         for ev in events {
             counts[label(ev), default: 0] += 1
         }
-        XCTAssertEqual(counts["inhale-start"], 36)
-        XCTAssertEqual(counts["exhale-start"], 36)
+        // Calm: 4 rounds × 9 cycles/round × (4 inhale-counts + 6 exhale-counts)
+        XCTAssertEqual(counts["inhale-count"], 144)
+        XCTAssertEqual(counts["exhale-count"], 216)
         XCTAssertEqual(counts["rest-start"], 4)
         XCTAssertEqual(counts["round-complete"], 4)
         XCTAssertEqual(counts["session-complete"], 1)
@@ -83,11 +84,12 @@ final class BreathRuntimeTests: XCTestCase {
 
     func testFirstEventIsInhaleAtZero() throws {
         let events = try runFullSession(config: Self.calm)
-        guard case let .inhaleStart(round, durationSec, atMs) = events.first else {
-            return XCTFail("expected first event to be inhale-start")
+        guard case let .inhaleCount(round, beat, total, atMs) = events.first else {
+            return XCTFail("expected first event to be inhale-count")
         }
         XCTAssertEqual(round, 1)
-        XCTAssertEqual(durationSec, 4)
+        XCTAssertEqual(beat, 0)
+        XCTAssertEqual(total, 4)
         XCTAssertEqual(atMs, 0)
     }
 
@@ -104,26 +106,37 @@ final class BreathRuntimeTests: XCTestCase {
         let runtime = try BreathRuntime()
         let session = try runtime.createSession(config: Self.calm)
         let initial = session.start(nowMs: 0)
+        // Initial events: inhale-count(beatIndex=0) at t=0
         XCTAssertEqual(initial.count, 1)
         XCTAssertFalse(session.isPaused)
 
-        // Pause at 3s wall time (before the 4s exhale).
-        session.pause(nowMs: 3000)
+        // Drain inhale-counts at t=1000, 2000, 3000 before pausing so the
+        // cursor is at the next pending event (t=4000 exhale-count).
+        _ = session.tick(nowMs: 3500)
+
+        // Pause at 3.5s wall time. The first exhale-count is due at
+        // effective t=4000.
+        session.pause(nowMs: 3500)
         XCTAssertTrue(session.isPaused)
         XCTAssertEqual(session.tick(nowMs: 50000), [], "no events while paused")
 
-        // Resume 5s later. Effective time at wall 8000 = 3000.
-        session.resume(nowMs: 8000)
+        // Resume 5s later. Effective time at wall 8500 = 3500.
+        session.resume(nowMs: 8500)
         XCTAssertFalse(session.isPaused)
-        XCTAssertEqual(session.tick(nowMs: 8500), [], "still before effective 4000")
+        XCTAssertEqual(session.tick(nowMs: 8900), [], "still before effective 4000")
 
-        let events = session.tick(nowMs: 9000)
-        XCTAssertEqual(events.count, 1)
-        if case let .exhaleStart(round, durationSec, _) = events.first {
+        let events = session.tick(nowMs: 9001)
+        let exhaleEvents = events.compactMap { ev -> SessionEvent? in
+            if case .exhaleCount = ev { return ev }
+            return nil
+        }
+        XCTAssertGreaterThanOrEqual(exhaleEvents.count, 1)
+        if case let .exhaleCount(round, beat, total, _) = exhaleEvents.first {
             XCTAssertEqual(round, 1)
-            XCTAssertEqual(durationSec, 6)
+            XCTAssertEqual(beat, 0)
+            XCTAssertEqual(total, 6)
         } else {
-            XCTFail("expected exhale-start after resume")
+            XCTFail("expected exhale-count after resume")
         }
     }
 
@@ -172,8 +185,8 @@ final class BreathRuntimeTests: XCTestCase {
 
     private func label(_ event: SessionEvent) -> String {
         switch event {
-        case .inhaleStart: return "inhale-start"
-        case .exhaleStart: return "exhale-start"
+        case .inhaleCount: return "inhale-count"
+        case .exhaleCount: return "exhale-count"
         case .restStart: return "rest-start"
         case .roundComplete: return "round-complete"
         case .sessionComplete: return "session-complete"

@@ -377,13 +377,13 @@ function teardownSession(): void {
 function handleEvents(events: readonly SessionEvent[]): void {
   for (const ev of events) {
     switch (ev.kind) {
-      case "inhale-start":
+      case "inhale-count":
         currentRound = ev.round;
-        currentPhaseLabel = "Inhale";
+        if (ev.beatIndex === 0) currentPhaseLabel = "Inhale";
         break;
-      case "exhale-start":
+      case "exhale-count":
         currentRound = ev.round;
-        currentPhaseLabel = "Exhale";
+        if (ev.beatIndex === 0) currentPhaseLabel = "Exhale";
         break;
       case "rest-start":
         currentRound = ev.round;
@@ -398,11 +398,11 @@ function handleEvents(events: readonly SessionEvent[]): void {
 
     try {
       switch (ev.kind) {
-        case "inhale-start":
-          tones?.playInhale({ durationSec: ev.durationSec });
+        case "inhale-count":
+          tones?.playInhaleChime();
           break;
-        case "exhale-start":
-          tones?.playExhale({ durationSec: ev.durationSec });
+        case "exhale-count":
+          tones?.playExhaleChime();
           break;
         case "rest-start":
           tones?.fadeOut({ fadeSec: ev.fadeOutSec });

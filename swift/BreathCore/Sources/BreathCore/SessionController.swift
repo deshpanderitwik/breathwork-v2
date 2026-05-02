@@ -103,14 +103,14 @@ public final class SessionController {
     private func handle(events: [SessionEvent]) {
         for ev in events {
             switch ev {
-            case .inhaleStart(let round, let durationSec, _):
+            case .inhaleCount(let round, let beatIndex, _, _):
                 state.currentRound = round
-                state.currentPhase = "Inhale"
-                tones.playInhale(durationSec: durationSec)
-            case .exhaleStart(let round, let durationSec, _):
+                if beatIndex == 0 { state.currentPhase = "Inhale" }
+                tones.playInhaleChime()
+            case .exhaleCount(let round, let beatIndex, _, _):
                 state.currentRound = round
-                state.currentPhase = "Exhale"
-                tones.playExhale(durationSec: durationSec)
+                if beatIndex == 0 { state.currentPhase = "Exhale" }
+                tones.playExhaleChime()
             case .restStart(let round, _, let fadeOutSec, _):
                 state.currentRound = round
                 state.currentPhase = "Rest"

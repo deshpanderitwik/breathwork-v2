@@ -1,63 +1,423 @@
 [
   {
-    "kind": "inhale-start",
+    "kind": "inhale-count",
     "round": 1,
-    "durationSec": 5,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 0
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 1,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 1000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 2000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 3000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 4000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 5000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 1,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 6000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 7000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 8000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 9000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 10000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 11000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 12000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 13000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 1,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 14000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 15000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 16000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 17000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 18000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 1,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 19000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 20000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 21000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 22000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 23000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 24000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 25000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 26000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 1,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 27000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 28000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 29000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 30000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 31000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 1,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 32000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 33000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 34000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 35000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 36000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 37000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 38000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 39000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 1,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 40000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 41000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 42000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 43000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 44000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 1,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 45000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 46000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 47000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 48000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 49000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 50000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 51000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 52000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 1,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 53000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 54000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 55000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 1,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 56000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 57000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 58000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 1,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 59000
   },
   {
     "kind": "rest-start",
@@ -72,64 +432,424 @@
     "atMs": 90000
   },
   {
-    "kind": "inhale-start",
+    "kind": "inhale-count",
     "round": 2,
-    "durationSec": 5,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 90000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 2,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 91000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 92000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 93000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 94000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 95000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 2,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 96000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 97000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 98000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 99000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 100000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 101000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 102000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 103000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 2,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 104000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 105000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 106000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 107000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 108000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 2,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 109000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 110000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 111000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 112000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 113000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 114000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 115000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 116000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 2,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 117000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 118000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 119000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 120000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 121000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 2,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 122000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 123000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 124000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 125000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 126000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 127000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 128000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 129000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 2,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 130000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 131000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 132000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 133000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 134000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 2,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 135000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 136000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 137000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 138000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 139000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 140000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 141000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 142000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 2,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 143000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 144000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 145000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 2,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 146000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 147000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 148000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 2,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 149000
   },
   {
     "kind": "rest-start",
@@ -144,64 +864,424 @@
     "atMs": 180000
   },
   {
-    "kind": "inhale-start",
+    "kind": "inhale-count",
     "round": 3,
-    "durationSec": 5,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 180000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 3,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 181000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 182000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 183000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 184000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 185000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 3,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 186000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 187000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 188000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 189000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 190000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 191000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 192000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 193000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 3,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 194000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 195000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 196000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 197000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 198000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 3,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 199000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 200000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 201000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 202000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 203000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 204000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 205000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 206000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 3,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 207000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 208000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 209000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 210000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 211000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 3,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 212000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 213000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 214000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 215000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 216000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 217000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 218000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 219000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 3,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 220000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 221000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 222000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 223000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 224000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 3,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 225000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 226000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 227000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 228000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 229000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 230000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 231000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 232000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 3,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 233000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 234000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 235000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 3,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 236000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 237000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 238000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 3,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 239000
   },
   {
     "kind": "rest-start",
@@ -216,64 +1296,424 @@
     "atMs": 270000
   },
   {
-    "kind": "inhale-start",
+    "kind": "inhale-count",
     "round": 4,
-    "durationSec": 5,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 270000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 4,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 271000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 272000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 273000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 274000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 275000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 4,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 276000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 277000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 278000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 279000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 280000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 281000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 282000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 283000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 4,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 284000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 285000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 286000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 287000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 288000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 4,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 289000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 290000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 291000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 292000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 293000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 294000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 295000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 296000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 4,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 297000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 298000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 299000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 300000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 301000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 4,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 302000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 303000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 304000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 305000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 306000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 307000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 308000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 309000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 4,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 310000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 311000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 312000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 313000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 314000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 4,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 315000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 316000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 317000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 318000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 319000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 320000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 321000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 322000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 4,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 323000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 324000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 325000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 4,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 326000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 327000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 328000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 4,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 329000
   },
   {
     "kind": "rest-start",
@@ -288,64 +1728,424 @@
     "atMs": 360000
   },
   {
-    "kind": "inhale-start",
+    "kind": "inhale-count",
     "round": 5,
-    "durationSec": 5,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 360000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 5,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 361000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 362000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 363000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 364000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 365000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 5,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 366000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 367000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 368000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 369000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 370000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 371000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 372000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 373000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 5,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 374000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 375000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 376000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 377000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 378000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 5,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 379000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 380000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 381000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 382000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 383000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 384000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 385000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 386000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 5,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 387000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 388000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 389000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 390000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 391000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 5,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 392000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 393000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 394000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 395000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 396000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 397000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 398000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 399000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 5,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 400000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 401000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 402000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 403000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 404000
   },
   {
-    "kind": "inhale-start",
+    "kind": "exhale-count",
     "round": 5,
-    "durationSec": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 405000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 406000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 3,
+    "beatsInPhase": 8,
+    "atMs": 407000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 4,
+    "beatsInPhase": 8,
+    "atMs": 408000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 5,
+    "beatsInPhase": 8,
+    "atMs": 409000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 6,
+    "beatsInPhase": 8,
+    "atMs": 410000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 7,
+    "beatsInPhase": 8,
+    "atMs": 411000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 0,
+    "beatsInPhase": 5,
     "atMs": 412000
   },
   {
-    "kind": "exhale-start",
+    "kind": "inhale-count",
     "round": 5,
-    "durationSec": 8,
+    "beatIndex": 1,
+    "beatsInPhase": 5,
+    "atMs": 413000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 2,
+    "beatsInPhase": 5,
+    "atMs": 414000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 3,
+    "beatsInPhase": 5,
+    "atMs": 415000
+  },
+  {
+    "kind": "inhale-count",
+    "round": 5,
+    "beatIndex": 4,
+    "beatsInPhase": 5,
+    "atMs": 416000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 0,
+    "beatsInPhase": 8,
     "atMs": 417000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 1,
+    "beatsInPhase": 8,
+    "atMs": 418000
+  },
+  {
+    "kind": "exhale-count",
+    "round": 5,
+    "beatIndex": 2,
+    "beatsInPhase": 8,
+    "atMs": 419000
   },
   {
     "kind": "rest-start",

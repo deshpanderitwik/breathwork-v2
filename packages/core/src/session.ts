@@ -53,24 +53,48 @@ function buildSchedule(
     const roundStartMs =
       startMs + (r - 1) * (config.activeSec + config.restSec) * 1000;
 
+    // Emit one count event per second within the active phase. Each
+    // breath cycle = inhaleSec inhale-counts followed by exhaleSec
+    // exhale-counts. We bail out the moment a count would land at or past
+    // the active phase boundary so the rest-start event isn't preceded
+    // by a stray count.
     for (let c = 0; ; c++) {
       const inhaleOffsetSec = c * cycleSec;
       const exhaleOffsetSec = inhaleOffsetSec + config.inhaleSec;
-
       if (inhaleOffsetSec >= config.activeSec) break;
 
-      const inhaleAtMs = roundStartMs + inhaleOffsetSec * 1000;
-      scheduled.push({
-        atMs: inhaleAtMs,
-        event: { kind: "inhale-start", round: r, durationSec: config.inhaleSec, atMs: inhaleAtMs },
-      });
+      for (let i = 0; i < config.inhaleSec; i++) {
+        const offsetSec = inhaleOffsetSec + i;
+        if (offsetSec >= config.activeSec) break;
+        const atMs = roundStartMs + offsetSec * 1000;
+        scheduled.push({
+          atMs,
+          event: {
+            kind: "inhale-count",
+            round: r,
+            beatIndex: i,
+            beatsInPhase: config.inhaleSec,
+            atMs,
+          },
+        });
+      }
 
       if (exhaleOffsetSec < config.activeSec) {
-        const exhaleAtMs = roundStartMs + exhaleOffsetSec * 1000;
-        scheduled.push({
-          atMs: exhaleAtMs,
-          event: { kind: "exhale-start", round: r, durationSec: config.exhaleSec, atMs: exhaleAtMs },
-        });
+        for (let i = 0; i < config.exhaleSec; i++) {
+          const offsetSec = exhaleOffsetSec + i;
+          if (offsetSec >= config.activeSec) break;
+          const atMs = roundStartMs + offsetSec * 1000;
+          scheduled.push({
+            atMs,
+            event: {
+              kind: "exhale-count",
+              round: r,
+              beatIndex: i,
+              beatsInPhase: config.exhaleSec,
+              atMs,
+            },
+          });
+        }
       }
     }
 
@@ -105,18 +129,24 @@ function buildSchedule(
   return scheduled;
 }
 
-function phaseFromEvent(event: SessionEvent): Phase {
+function phaseFromEvent(event: SessionEvent): Phase | null {
   switch (event.kind) {
-    case "inhale-start":
-      return { kind: "active-inhale", round: event.round, startedAtMs: event.atMs };
-    case "exhale-start":
-      return { kind: "active-exhale", round: event.round, startedAtMs: event.atMs };
+    case "inhale-count":
+      return event.beatIndex === 0
+        ? { kind: "active-inhale", round: event.round, startedAtMs: event.atMs }
+        : null;
+    case "exhale-count":
+      return event.beatIndex === 0
+        ? { kind: "active-exhale", round: event.round, startedAtMs: event.atMs }
+        : null;
     case "rest-start":
       return { kind: "rest", round: event.round, startedAtMs: event.atMs };
     case "session-complete":
       return { kind: "complete" };
+    case "round-complete":
+      return null;
     default:
-      return undefined as never;
+      return null;
   }
 }
 
@@ -148,9 +178,8 @@ export function createSession(config: SessionConfig): Session {
       if (!entry || entry.atMs > effective) break;
       cursor++;
       events.push(entry.event);
-      if (entry.event.kind !== "round-complete") {
-        phase = phaseFromEvent(entry.event);
-      }
+      const next = phaseFromEvent(entry.event);
+      if (next !== null) phase = next;
     }
     return events;
   }
