@@ -6,118 +6,123 @@ The machine breathes. You fall in.
 
 ## What this is
 
-- **macOS**: native SwiftUI menu bar app
-- **iOS**: native SwiftUI app with background audio and haptics
-- **Web**: SPA that works in any modern browser
+- **macOS** — menu bar app. Left-click to start a session, right-click for settings.
+- **iOS** — full-screen SwiftUI app. Background audio so it keeps running with the screen locked.
+- **Web** — SPA at the deployed Vercel URL.
 
-Same state machine on every surface. Different audio implementations,
-because Web Audio and AVAudioEngine have genuinely different strengths.
+All three share one state machine, one tone design, one set of presets — written in TypeScript and consumed by Swift through JavaScriptCore. Audio stays native per platform because Web Audio and AVAudioEngine have genuinely different strengths.
 
 ## Architecture
 
 ```
 breathwork-v2/
 ├── packages/
-│   └── core/                       # TypeScript state machine (single source of truth)
+│   └── core/                            # TypeScript — single source of truth
 │       ├── src/
-│       │   ├── types.ts            # SessionConfig, Phase, SessionEvent
-│       │   ├── presets.ts          # Calm, Focus, Deep
-│       │   ├── tone-set.ts         # ToneSet interface (per-platform impl)
-│       │   ├── session.ts          # createSession() state machine
+│       │   ├── types.ts                 # SessionConfig, Phase, SessionEvent
+│       │   ├── presets.ts               # Calm, Focus, Deep
+│       │   ├── tone-design.ts           # Frequencies, envelope, partials
+│       │   ├── tone-set.ts              # ToneSet interface
+│       │   ├── session.ts               # createSession() state machine
 │       │   └── index.ts
 │       └── test/
-│           └── session.test.ts     # Contract tests = the spec
+│           ├── session.test.ts          # Contract tests
+│           └── fixtures/*.json          # Recorded event timelines
 ├── apps/
-│   └── web/                        # SPA consuming @breathe/core as ES module
-└── swift/
-    ├── BreathRuntime/              # SwiftPM: JSC bridge to core.iife.js
-    ├── BreathAudio/                # SwiftPM: AVAudioEngine ToneSet
-    ├── BreathMac/                  # Native menu bar app (Phase 2)
-    └── BreathIOS/                  # Native iOS app (Phase 2)
+│   ├── web/                             # Vite + TypeScript SPA
+│   ├── macos/                           # SwiftPM executable, menu bar app
+│   └── ios/                             # XcodeGen + SwiftUI app
+├── swift/
+│   ├── BreathCore/                      # Shared SwiftPM package
+│   │   └── Sources/BreathCore/
+│   │       ├── ToneEngine.swift         # AVAudioEngine implementation
+│   │       ├── SessionController.swift  # Wires runtime + tones + state
+│   │       ├── AppState.swift           # ObservableObject
+│   │       ├── SettingsStore.swift      # UserDefaults
+│   │       ├── SettingsView.swift       # SwiftUI form (shared by mac+iOS)
+│   │       └── TimelineView.swift       # SwiftUI timeline strip
+│   └── BreathRuntime/                   # JSC bridge to core.iife.js
+└── scripts/
+    ├── sync-core.sh                     # Build core, copy artifacts to Swift
+    └── gen-fixtures.sh                  # Regenerate contract fixtures
 ```
 
 ### The trick
 
-One state machine, written in TypeScript. The web app imports it directly.
-The Apple apps load it into a `JSContext` (JavaScriptCore is a system
-framework on every Mac and iPhone) and call it from Swift.
+One state machine, written in TypeScript. The web app imports it as an ES module. The Apple apps load `core.iife.js` into a `JSContext` (JavaScriptCore is a system framework on every Mac and iPhone) and call into it from Swift via `BreathRuntime`.
 
-Audio stays native per platform. The state machine doesn't.
+Same `tone-design.ts` constants drive both the Web Audio chime and the AVAudioEngine chime — change one number, all three platforms move together. Contract-parity tests in `BreathRuntimeTests/ContractFixtureTests.swift` assert that the Swift bridge emits a byte-equal event sequence to the recorded fixtures, so JS↔Swift drift becomes a test failure.
 
 ## Build
 
+### Web
+
 ```bash
 pnpm install
-pnpm -r build           # builds @breathe/core in two formats:
-                        #   dist/index.js         (ES module, for web)
-                        #   dist/core.iife.js     (IIFE global `Breathe`, for JSC)
-pnpm -r test            # runs contract tests
+pnpm --filter @breathe/core build
+pnpm --filter @breathe/web dev      # local dev server
+pnpm --filter @breathe/web build    # production build → apps/web/dist
 ```
 
-Swift packages build independently:
+Pushes to `main` auto-deploy to Vercel (`vercel.json` at root).
+
+### macOS
 
 ```bash
-cd swift/BreathRuntime && swift test
-cd swift/BreathAudio && swift test
+cd apps/macos
+make run                              # rebuilds, packages, launches the .app
+```
+
+The Makefile invokes `scripts/sync-core.sh` first to rebuild `@breathe/core` and copy `core.iife.js` into the Swift bundle. Without that step, the Swift app can't load the JS engine.
+
+### iOS
+
+```bash
+cd apps/ios
+make devices                          # list paired iPhones; copy the device ID
+# (edit DEVICE in Makefile if it differs)
+make run                              # XcodeGen → xcodebuild → install → launch
+```
+
+First run requires a free Apple Developer account (set in Xcode's Signing & Capabilities) and trusting the developer profile on the device under Settings → General → VPN & Device Management.
+
+### Tests
+
+```bash
+pnpm --filter @breathe/core test                # 14 TS contract tests
+cd swift/BreathRuntime && swift test            # 17 Swift tests, incl. parity
 ```
 
 ## Contracts
 
-Two contracts define this project. Change them with intent.
+### `SessionConfig` → `SessionEvent[]`
 
-### 1. `SessionConfig` → `SessionEvent[]`
+The state machine is pure: given a config and a sequence of tick timestamps, it deterministically emits the same events at the same effective timestamps. Pause arithmetic lives inside the engine — host code passes monotonic `nowMs`, calls `pause()` / `resume()` at user gestures, and reads frozen elapsed time via `effectiveMs(nowMs)`.
 
-The state machine is pure: given a config and a sequence of tick timestamps,
-it deterministically emits the same events. Tests in
-`packages/core/test/session.test.ts` encode the expected event sequences for
-each preset. These are the spec.
+Events are emitted at **count granularity** (one event per beat-second), not phase granularity:
 
-### 2. `ToneSet` interface
+```typescript
+| { kind: "inhale-count"; round; beatIndex; beatsInPhase; atMs }
+| { kind: "exhale-count"; round; beatIndex; beatsInPhase; atMs }
+| { kind: "rest-start";   round; durationSec; fadeOutSec; atMs }
+| { kind: "round-complete"; round; atMs }
+| { kind: "session-complete"; atMs }
+```
+
+`beatIndex === 0` marks phase entry — UI uses that to swap labels. One event = one chime; pause cancels nothing because nothing is queued past "now."
+
+### `ToneSet` interface
 
 ```typescript
 interface ToneSet {
-  playInhale(params: { durationSec: number }): void;
-  playExhale(params: { durationSec: number }): void;
+  playInhaleChime(): void;          // single chime, fires at currentTime
+  playExhaleChime(): void;
   fadeOut(params: { fadeSec: number }): void;
   stop(): void;
 }
 ```
 
-Both the Web Audio and the AVAudioEngine implementations satisfy this. The
-state machine never knows which one it's calling.
-
-## Phases
-
-This project ships in three phases so multiple agents can work in parallel.
-
-### Phase 0 — Scaffold (done)
-
-Monorepo, contracts, stub implementations, contract tests that define Phase 1.
-
-### Phase 1 — Core + Runtime (two agents in parallel)
-
-- **Agent A: TS Core.** Implements `packages/core/src/session.ts` until the
-  `describe.skip(...)` contract tests all pass when un-skipped.
-- **Agent B: Swift Runtime.** Implements `BreathRuntime` to load
-  `core.iife.js` into a `JSContext` and expose Swift methods that mirror the
-  TS API. Its tests mirror the contract tests from the TS suite.
-
-Both depend only on the types frozen in Phase 0.
-
-### Phase 2 — Three surfaces (three agents in parallel)
-
-- **Agent C: Web.** Scaffolds `apps/web`, implements `WebAudioToneSet`, builds
-  minimal session + settings UI.
-- **Agent D: macOS.** Creates `swift/BreathMac` Xcode project — menu bar
-  status item, popover window, settings panel. Uses BreathRuntime and
-  BreathAudio.
-- **Agent E: iOS.** Creates `swift/BreathIOS` Xcode project — SwiftUI screen,
-  background audio session, optional haptics. Uses BreathRuntime and BreathAudio.
-
-### Phase 3 — Integration
-
-Human pass: run all three surfaces back-to-back, eyes closed, headphones on.
-Verify the breath feels identical. File issues against any surface that drifts.
+Both `WebAudioToneSet` (Web Audio API) and `ToneEngine` (AVAudioEngine) implement it. Synthesis parameters come from `TONE_DESIGN` in `packages/core/src/tone-design.ts` — read at runtime by both engines through their respective bridges, so the chime is bit-identical across platforms.
 
 ## Design principles (from the PRD)
 
@@ -127,10 +132,21 @@ Verify the breath feels identical. File issues against any surface that drifts.
 4. Settings are for between sessions.
 5. Build for evolution.
 
+## Roadmap
+
+Shipped:
+- Three surfaces with shared state machine and tone design
+- Pause/resume on every surface (web, macOS, iOS)
+- Background audio on iOS (continues with locked screen)
+- LocalStorage / UserDefaults persistence
+- Contract-parity tests for the JS↔Swift bridge
+
+Likely next:
+- iOS haptics (CHHapticEngine) for silent / pocket use
+- iOS Live Activity (lock screen + Dynamic Island timeline)
+- TestFlight / App Store submission
+- Apple Watch companion
+
 ## Reference: v1
 
-The Swift prototype lives at `../breathwork-v1/`. Its `BreathEngine.swift`
-contains the proven audio primitives (AVAudioEngine setup, PCM buffer
-envelope math, sine generation with harmonics). Phase 1's `SineToneSet` should
-port these primitives, but the `Timer`-based loop is replaced by the state
-machine driving `ToneSet` calls.
+The Swift prototype lives at `../breathwork-v1/`. Its `BreathEngine.swift` is where the chime synthesis (fundamental + partials, exp decay envelope, AVAudioEngine plumbing) was first proven. v2's `ToneEngine` is the same math, parameterized by `TONE_DESIGN` instead of hardcoded.
