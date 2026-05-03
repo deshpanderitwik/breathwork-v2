@@ -29,6 +29,9 @@ public final class ToneEngine {
         exhaleBuffer = makeChime(frequency: Float(design.exhaleFreqHz))
     }
 
+    /// Pre-render one chime. The last 2 ms taper linearly to zero so the
+    /// buffer ends at silence — otherwise the natural exp decay leaves the
+    /// final sample at ~4% and the iPhone speaker pops on the step to 0.
     private func makeChime(frequency: Float) -> AVAudioPCMBuffer {
         let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
         let frameCount = AVAudioFrameCount(design.chimeDurationSec * sampleRate)
@@ -42,16 +45,21 @@ public final class ToneEngine {
         let p2 = Float(design.partial2Weight)
         let p3 = Float(design.partial3Weight)
         let scale = Float(design.masterScale)
+        let releaseSamples = max(1, Int(0.002 * sampleRate))
+        let releaseStart = Int(frameCount) - releaseSamples
 
         for i in 0..<Int(frameCount) {
             let t = Float(i) / sr
             let envelope: Float = t < attackTime
                 ? (t / attackTime)
                 : exp(-(t - attackTime) * lambda)
+            let release: Float = i < releaseStart
+                ? 1.0
+                : Float(Int(frameCount) - i) / Float(releaseSamples)
             let fundamental = sin(2.0 * .pi * frequency * t)
             let partial2 = sin(2.0 * .pi * frequency * 2.0 * t) * p2
             let partial3 = sin(2.0 * .pi * frequency * 3.0 * t) * p3
-            data[i] = (fundamental + partial2 + partial3) * envelope * scale
+            data[i] = (fundamental + partial2 + partial3) * envelope * release * scale
         }
         return buffer
     }
@@ -70,6 +78,18 @@ public final class ToneEngine {
         } catch {
             // Audio unavailable — silent failure, session continues visually.
         }
+    }
+
+    /// Warm the audio pipeline so the first chime fires sample-accurately.
+    ///
+    /// On iOS, AVAudioSession activation + engine.start + player.play takes
+    /// 100–300 ms cold. If we let the first `playInhaleChime` call do that,
+    /// chime 1 lands ~200 ms late while chimes 2+ land on time — so the gap
+    /// between chimes 1 and 2 sounds compressed. Calling `prepare()` before
+    /// the session dispatches its first event moves that latency to the
+    /// pre-roll and keeps the metronome locked to wall clock from chime 1.
+    public func prepare() {
+        ensureStarted()
     }
 
     /// Play one inhale chime starting now. Single-shot — count granularity

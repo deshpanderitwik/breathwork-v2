@@ -96,6 +96,11 @@ class WebAudioToneSet implements ToneSet {
   /**
    * Pre-render one chime to an AudioBuffer using the same math the native
    * ToneEngine uses. Computed once per toneset, replayed cheaply per beat.
+   *
+   * The last 2 ms taper linearly to zero so the buffer ends at silence —
+   * otherwise the natural exp decay leaves the final sample at ~4% and the
+   * speaker hardware clicks on the step to 0 (especially audible on the
+   * iPhone built-in speaker).
    */
   private _renderChime(d: ToneDesign, frequencyHz: number): AudioBuffer {
     const sampleRate = this.context.sampleRate;
@@ -104,16 +109,20 @@ class WebAudioToneSet implements ToneSet {
     const data = buffer.getChannelData(0);
 
     const twoPiF = 2 * Math.PI * frequencyHz;
+    const releaseSamples = Math.max(1, Math.floor(0.002 * sampleRate));
+    const releaseStart = frameCount - releaseSamples;
     for (let i = 0; i < frameCount; i++) {
       const t = i / sampleRate;
       const envelope =
         t < d.attackSec
           ? t / d.attackSec
           : Math.exp(-(t - d.attackSec) * d.decayLambda);
+      const release = i < releaseStart ? 1 : (frameCount - i) / releaseSamples;
       const fundamental = Math.sin(twoPiF * t);
       const partial2 = Math.sin(twoPiF * 2 * t) * d.partial2Weight;
       const partial3 = Math.sin(twoPiF * 3 * t) * d.partial3Weight;
-      data[i] = (fundamental + partial2 + partial3) * envelope * d.masterScale;
+      data[i] =
+        (fundamental + partial2 + partial3) * envelope * release * d.masterScale;
     }
     return buffer;
   }

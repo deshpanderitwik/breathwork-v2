@@ -51,6 +51,12 @@ public final class SessionController {
         state.elapsedMs = 0
         state.currentPhase = ""
         state.currentRound = 1
+
+        // Warm the audio engine BEFORE dispatching the first inhale-count
+        // event. Otherwise the first chime is delayed by AVAudioSession +
+        // engine startup latency (~200 ms on iOS), bunching chimes 1 and 2.
+        tones.prepare()
+
         sessionStart = Date()
 
         let initial = session?.start(nowMs: 0) ?? []
