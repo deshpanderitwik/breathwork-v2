@@ -191,11 +191,11 @@
 
         <!-- Annotations — offset off each arrow's path so the line
              doesn't strike through the text -->
-        <text x="75" y="180" text-anchor="middle" font-size="10"
+        <text x="110" y="180" text-anchor="middle" font-size="10"
               fill="#9aa0aa">ES module</text>
-        <text x="445" y="180" text-anchor="middle" font-size="10"
+        <text x="425" y="180" text-anchor="middle" font-size="10"
               fill="#9aa0aa">JavaScriptCore</text>
-        <text x="645" y="180" text-anchor="middle" font-size="10"
+        <text x="620" y="180" text-anchor="middle" font-size="10"
               fill="#9aa0aa">JavaScriptCore</text>
 
         <!-- Core box -->
@@ -271,9 +271,11 @@
   <!-- ===================================================================== -->
   <h2>Three pieces in dialogue</h2>
   <p>The runtime architecture is three actors: the state machine, the
-    poll loop, and the audio engine. The poll loop in the middle is
-    the only active component — it pulls from the state machine and
-    pushes to the audio engine.</p>
+    poll loop, and the audio engine. The poll loop in the middle
+    pulls events from the state machine and queues them into the
+    audio engine ahead of time; the audio engine's own hardware clock
+    is what actually fires each chime, at the precise sample it was
+    scheduled for.</p>
 
   <figure>
     <svg viewBox="0 0 720 290" aria-label="Three pieces in dialogue">
@@ -286,6 +288,14 @@
                 markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="#ff6b6b" />
         </marker>
+        <!-- Soft drop shadow for text labels that overlap diagram
+             elements. Single feDropShadow, wide blur, slightly
+             reduced opacity — reads as a smooth glow rather than a
+             hard halo. -->
+        <filter id="textShadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="1" stdDeviation="3"
+                        flood-color="#0e0f12" flood-opacity="0.85"/>
+        </filter>
       </defs>
 
       <!-- State machine -->
@@ -335,42 +345,71 @@
               font-family="ui-monospace, Menlo, monospace">ask schedule, dispatch events</text>
       </g>
 
-      <!-- Audio engine -->
+      <!-- Audio engine — sized to match the poll loop and given its
+           own (faster) clock pulse, so it reads as just as active. The
+           poll loop fills its queue; the audio engine fires the chimes. -->
       <g font-family="ui-sans-serif, system-ui">
-        <rect x="510" y="80" width="200" height="170" rx="12"
+        <rect x="510" y="50" width="200" height="230" rx="12"
               fill="#1d2026" stroke="#ff6b6b" stroke-width="1.5"/>
-        <text x="610" y="108" text-anchor="middle" font-size="14"
+        <text x="610" y="78" text-anchor="middle" font-size="14"
               font-weight="600" fill="#ff6b6b">AUDIO ENGINE</text>
-        <text x="610" y="128" text-anchor="middle" font-size="12" fill="#9aa0aa">the speaker</text>
-        <line x1="530" y1="142" x2="690" y2="142" stroke="#2a2e36"/>
-        <text x="610" y="166" text-anchor="middle" font-size="11" fill="#e8e9ec">Web Audio /</text>
-        <text x="610" y="184" text-anchor="middle" font-size="11" fill="#e8e9ec">AVAudioEngine</text>
-        <text x="610" y="204" text-anchor="middle" font-size="11" fill="#e8e9ec">has its own clock</text>
-        <text x="610" y="232" text-anchor="middle" font-size="10" fill="#9aa0aa"
-              font-family="ui-monospace, Menlo, monospace">play(buffer, when?)</text>
+        <text x="610" y="98" text-anchor="middle" font-size="12" fill="#9aa0aa">the speaker</text>
+        <line x1="530" y1="112" x2="690" y2="112" stroke="#2a2e36"/>
+
+        <!-- Hardware clock pulse: small dots pulsing rapidly in
+             unison, distinct from the poll loop's slow sequential
+             heartbeat. Conveys a continuous high-frequency clock. -->
+        <g>
+          <circle cx="568" cy="138" r="2.5" fill="#ff6b6b">
+            <animate attributeName="opacity" values="1;0.2;1" dur="0.35s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="585" cy="138" r="2.5" fill="#ff6b6b">
+            <animate attributeName="opacity" values="1;0.2;1" dur="0.35s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="602" cy="138" r="2.5" fill="#ff6b6b">
+            <animate attributeName="opacity" values="1;0.2;1" dur="0.35s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="619" cy="138" r="2.5" fill="#ff6b6b">
+            <animate attributeName="opacity" values="1;0.2;1" dur="0.35s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="636" cy="138" r="2.5" fill="#ff6b6b">
+            <animate attributeName="opacity" values="1;0.2;1" dur="0.35s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="653" cy="138" r="2.5" fill="#ff6b6b">
+            <animate attributeName="opacity" values="1;0.2;1" dur="0.35s" repeatCount="indefinite"/>
+          </circle>
+        </g>
+
+        <text x="610" y="174" text-anchor="middle" font-size="11" fill="#e8e9ec">sample-accurate</text>
+        <text x="610" y="192" text-anchor="middle" font-size="11" fill="#e8e9ec">hardware clock</text>
+        <line x1="530" y1="208" x2="690" y2="208" stroke="#2a2e36"/>
+        <text x="610" y="232" text-anchor="middle" font-size="11" fill="#e8e9ec">at each scheduled atMs:</text>
+        <text x="610" y="252" text-anchor="middle" font-size="10" fill="#9aa0aa"
+              font-family="ui-monospace, Menlo, monospace">fire the chime</text>
       </g>
 
       <!-- Top arrow: poll asks state machine -->
       <path d="M 260 138 Q 235 110 210 138" fill="none"
             stroke="#9aa0aa" stroke-width="1.5" marker-end="url(#arr)"/>
       <text x="235" y="100" text-anchor="middle" font-size="11"
-            fill="#9aa0aa">"any events since T?"</text>
+            fill="#9aa0aa" filter="url(#textShadow)">"any events since T?"</text>
 
       <!-- Bottom arrow: state machine returns events -->
       <path d="M 210 200 Q 235 230 260 200" fill="none"
             stroke="#9aa0aa" stroke-width="1.5" marker-end="url(#arr)"/>
       <text x="235" y="252" text-anchor="middle" font-size="11"
-            fill="#9aa0aa">events[]</text>
+            fill="#9aa0aa" filter="url(#textShadow)">events[]</text>
 
       <!-- Right arrow: poll → audio engine -->
       <line x1="460" y1="165" x2="510" y2="165"
             stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrFire)"/>
       <text x="485" y="155" text-anchor="middle" font-size="11"
-            fill="#ff6b6b">play this chime</text>
+            fill="#ff6b6b" filter="url(#textShadow)">schedule chime at atMs</text>
     </svg>
-    <figcaption>The three actors. The state machine and audio engine
-      are passive; the poll loop is the only active component, ferrying
-      events between them.</figcaption>
+    <figcaption>The three actors. The state machine answers when
+      asked; the poll loop fills the audio engine's queue ahead of
+      time; the audio engine's hardware clock fires each chime at its
+      precise scheduled moment.</figcaption>
   </figure>
 
   <!-- ===================================================================== -->
@@ -386,76 +425,77 @@
   <figure>
     <svg viewBox="0 0 720 280" aria-label="Before and after timing comparison">
       <g font-family="ui-sans-serif, system-ui" font-size="11" fill="#9aa0aa">
-        <!-- Time axis ticks -->
-        <text x="20" y="30" font-size="11" fill="#6a7080">0s</text>
-        <text x="148" y="30" font-size="11" fill="#6a7080" text-anchor="middle">1s</text>
-        <text x="276" y="30" font-size="11" fill="#6a7080" text-anchor="middle">2s</text>
-        <text x="404" y="30" font-size="11" fill="#6a7080" text-anchor="middle">3s</text>
-        <text x="532" y="30" font-size="11" fill="#6a7080" text-anchor="middle">4s</text>
-        <text x="660" y="30" font-size="11" fill="#6a7080" text-anchor="middle">5s</text>
+        <!-- Time axis ticks (timeline shifted right so row labels at
+             x=0 don't overlap the chart) -->
+        <text x="170" y="30" font-size="11" fill="#6a7080" text-anchor="middle">0s</text>
+        <text x="272" y="30" font-size="11" fill="#6a7080" text-anchor="middle">1s</text>
+        <text x="374" y="30" font-size="11" fill="#6a7080" text-anchor="middle">2s</text>
+        <text x="476" y="30" font-size="11" fill="#6a7080" text-anchor="middle">3s</text>
+        <text x="578" y="30" font-size="11" fill="#6a7080" text-anchor="middle">4s</text>
+        <text x="680" y="30" font-size="11" fill="#6a7080" text-anchor="middle">5s</text>
 
         <!-- Row 1: BEFORE -->
         <text x="0" y="78" fill="#e8e9ec" font-weight="500" font-size="13">Before</text>
         <text x="0" y="94" fill="#9aa0aa" font-size="11">play "now"</text>
         <!-- Grid -->
-        <line x1="20"  y1="60" x2="20"  y2="120" stroke="#3a414e" stroke-dasharray="2,4"/>
-        <line x1="148" y1="60" x2="148" y2="120" stroke="#3a414e" stroke-dasharray="2,4"/>
-        <line x1="276" y1="60" x2="276" y2="120" stroke="#3a414e" stroke-dasharray="2,4"/>
-        <line x1="404" y1="60" x2="404" y2="120" stroke="#3a414e" stroke-dasharray="2,4"/>
-        <line x1="532" y1="60" x2="532" y2="120" stroke="#3a414e" stroke-dasharray="2,4"/>
-        <line x1="660" y1="60" x2="660" y2="120" stroke="#3a414e" stroke-dasharray="2,4"/>
-        <line x1="20" y1="90" x2="660" y2="90" stroke="#2a2e36"/>
+        <line x1="170" y1="60" x2="170" y2="120" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="272" y1="60" x2="272" y2="120" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="374" y1="60" x2="374" y2="120" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="476" y1="60" x2="476" y2="120" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="578" y1="60" x2="578" y2="120" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="680" y1="60" x2="680" y2="120" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="170" y1="90" x2="680" y2="90" stroke="#2a2e36"/>
         <!-- Intent ticks (small) -->
-        <circle cx="20"  cy="90" r="3" fill="#7cc4ff" opacity="0.6"/>
-        <circle cx="148" cy="90" r="3" fill="#7cc4ff" opacity="0.6"/>
-        <circle cx="276" cy="90" r="3" fill="#7cc4ff" opacity="0.6"/>
-        <circle cx="404" cy="90" r="3" fill="#7cc4ff" opacity="0.6"/>
-        <circle cx="532" cy="90" r="3" fill="#7cc4ff" opacity="0.6"/>
-        <circle cx="660" cy="90" r="3" fill="#7cc4ff" opacity="0.6"/>
-        <!-- Fire markers (jittered) -->
-        <line x1="29"  y1="74" x2="29"  y2="106" stroke="#ff6b6b" stroke-width="2"/>
-        <circle cx="29"  cy="90" r="5" fill="#ff6b6b"/>
-        <line x1="167" y1="74" x2="167" y2="106" stroke="#ff6b6b" stroke-width="2"/>
-        <circle cx="167" cy="90" r="5" fill="#ff6b6b"/>
-        <line x1="289" y1="74" x2="289" y2="106" stroke="#ff6b6b" stroke-width="2"/>
-        <circle cx="289" cy="90" r="5" fill="#ff6b6b"/>
-        <line x1="412" y1="74" x2="412" y2="106" stroke="#ff6b6b" stroke-width="2"/>
-        <circle cx="412" cy="90" r="5" fill="#ff6b6b"/>
-        <line x1="557" y1="74" x2="557" y2="106" stroke="#ff6b6b" stroke-width="2"/>
-        <circle cx="557" cy="90" r="5" fill="#ff6b6b"/>
-        <line x1="675" y1="74" x2="675" y2="106" stroke="#ff6b6b" stroke-width="2"/>
-        <circle cx="675" cy="90" r="5" fill="#ff6b6b"/>
+        <circle cx="170" cy="90" r="3" fill="#7cc4ff" opacity="0.6"/>
+        <circle cx="272" cy="90" r="3" fill="#7cc4ff" opacity="0.6"/>
+        <circle cx="374" cy="90" r="3" fill="#7cc4ff" opacity="0.6"/>
+        <circle cx="476" cy="90" r="3" fill="#7cc4ff" opacity="0.6"/>
+        <circle cx="578" cy="90" r="3" fill="#7cc4ff" opacity="0.6"/>
+        <circle cx="680" cy="90" r="3" fill="#7cc4ff" opacity="0.6"/>
+        <!-- Fire markers (jittered: +9, +19, +13, +8, +25, +15) -->
+        <line x1="179" y1="74" x2="179" y2="106" stroke="#ff6b6b" stroke-width="2"/>
+        <circle cx="179" cy="90" r="5" fill="#ff6b6b"/>
+        <line x1="291" y1="74" x2="291" y2="106" stroke="#ff6b6b" stroke-width="2"/>
+        <circle cx="291" cy="90" r="5" fill="#ff6b6b"/>
+        <line x1="387" y1="74" x2="387" y2="106" stroke="#ff6b6b" stroke-width="2"/>
+        <circle cx="387" cy="90" r="5" fill="#ff6b6b"/>
+        <line x1="484" y1="74" x2="484" y2="106" stroke="#ff6b6b" stroke-width="2"/>
+        <circle cx="484" cy="90" r="5" fill="#ff6b6b"/>
+        <line x1="603" y1="74" x2="603" y2="106" stroke="#ff6b6b" stroke-width="2"/>
+        <circle cx="603" cy="90" r="5" fill="#ff6b6b"/>
+        <line x1="695" y1="74" x2="695" y2="106" stroke="#ff6b6b" stroke-width="2"/>
+        <circle cx="695" cy="90" r="5" fill="#ff6b6b"/>
         <!-- Drift connector -->
-        <line x1="20"  y1="90" x2="29"  y2="90" stroke="#ff6b6b" stroke-width="2" opacity="0.3"/>
-        <line x1="148" y1="90" x2="167" y2="90" stroke="#ff6b6b" stroke-width="2" opacity="0.3"/>
-        <line x1="276" y1="90" x2="289" y2="90" stroke="#ff6b6b" stroke-width="2" opacity="0.3"/>
-        <line x1="404" y1="90" x2="412" y2="90" stroke="#ff6b6b" stroke-width="2" opacity="0.3"/>
-        <line x1="532" y1="90" x2="557" y2="90" stroke="#ff6b6b" stroke-width="2" opacity="0.3"/>
-        <line x1="660" y1="90" x2="675" y2="90" stroke="#ff6b6b" stroke-width="2" opacity="0.3"/>
+        <line x1="170" y1="90" x2="179" y2="90" stroke="#ff6b6b" stroke-width="2" opacity="0.3"/>
+        <line x1="272" y1="90" x2="291" y2="90" stroke="#ff6b6b" stroke-width="2" opacity="0.3"/>
+        <line x1="374" y1="90" x2="387" y2="90" stroke="#ff6b6b" stroke-width="2" opacity="0.3"/>
+        <line x1="476" y1="90" x2="484" y2="90" stroke="#ff6b6b" stroke-width="2" opacity="0.3"/>
+        <line x1="578" y1="90" x2="603" y2="90" stroke="#ff6b6b" stroke-width="2" opacity="0.3"/>
+        <line x1="680" y1="90" x2="695" y2="90" stroke="#ff6b6b" stroke-width="2" opacity="0.3"/>
 
         <!-- Row 2: AFTER -->
         <text x="0" y="200" fill="#e8e9ec" font-weight="500" font-size="13">After</text>
         <text x="0" y="216" fill="#9aa0aa" font-size="11">scheduled at exact atMs</text>
-        <line x1="20"  y1="180" x2="20"  y2="240" stroke="#3a414e" stroke-dasharray="2,4"/>
-        <line x1="148" y1="180" x2="148" y2="240" stroke="#3a414e" stroke-dasharray="2,4"/>
-        <line x1="276" y1="180" x2="276" y2="240" stroke="#3a414e" stroke-dasharray="2,4"/>
-        <line x1="404" y1="180" x2="404" y2="240" stroke="#3a414e" stroke-dasharray="2,4"/>
-        <line x1="532" y1="180" x2="532" y2="240" stroke="#3a414e" stroke-dasharray="2,4"/>
-        <line x1="660" y1="180" x2="660" y2="240" stroke="#3a414e" stroke-dasharray="2,4"/>
-        <line x1="20" y1="210" x2="660" y2="210" stroke="#2a2e36"/>
+        <line x1="170" y1="180" x2="170" y2="240" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="272" y1="180" x2="272" y2="240" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="374" y1="180" x2="374" y2="240" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="476" y1="180" x2="476" y2="240" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="578" y1="180" x2="578" y2="240" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="680" y1="180" x2="680" y2="240" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="170" y1="210" x2="680" y2="210" stroke="#2a2e36"/>
         <!-- Fire markers (locked to grid) -->
-        <line x1="20"  y1="194" x2="20"  y2="226" stroke="#74e3a5" stroke-width="2"/>
-        <circle cx="20"  cy="210" r="5" fill="#74e3a5"/>
-        <line x1="148" y1="194" x2="148" y2="226" stroke="#74e3a5" stroke-width="2"/>
-        <circle cx="148" cy="210" r="5" fill="#74e3a5"/>
-        <line x1="276" y1="194" x2="276" y2="226" stroke="#74e3a5" stroke-width="2"/>
-        <circle cx="276" cy="210" r="5" fill="#74e3a5"/>
-        <line x1="404" y1="194" x2="404" y2="226" stroke="#74e3a5" stroke-width="2"/>
-        <circle cx="404" cy="210" r="5" fill="#74e3a5"/>
-        <line x1="532" y1="194" x2="532" y2="226" stroke="#74e3a5" stroke-width="2"/>
-        <circle cx="532" cy="210" r="5" fill="#74e3a5"/>
-        <line x1="660" y1="194" x2="660" y2="226" stroke="#74e3a5" stroke-width="2"/>
-        <circle cx="660" cy="210" r="5" fill="#74e3a5"/>
+        <line x1="170" y1="194" x2="170" y2="226" stroke="#74e3a5" stroke-width="2"/>
+        <circle cx="170" cy="210" r="5" fill="#74e3a5"/>
+        <line x1="272" y1="194" x2="272" y2="226" stroke="#74e3a5" stroke-width="2"/>
+        <circle cx="272" cy="210" r="5" fill="#74e3a5"/>
+        <line x1="374" y1="194" x2="374" y2="226" stroke="#74e3a5" stroke-width="2"/>
+        <circle cx="374" cy="210" r="5" fill="#74e3a5"/>
+        <line x1="476" y1="194" x2="476" y2="226" stroke="#74e3a5" stroke-width="2"/>
+        <circle cx="476" cy="210" r="5" fill="#74e3a5"/>
+        <line x1="578" y1="194" x2="578" y2="226" stroke="#74e3a5" stroke-width="2"/>
+        <circle cx="578" cy="210" r="5" fill="#74e3a5"/>
+        <line x1="680" y1="194" x2="680" y2="226" stroke="#74e3a5" stroke-width="2"/>
+        <circle cx="680" cy="210" r="5" fill="#74e3a5"/>
       </g>
     </svg>
     <div class="legend">
