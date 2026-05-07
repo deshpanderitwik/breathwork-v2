@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Breathe — essays</title>
+<title>Breathe — a breathing metronome with rounds</title>
 <style>
   :root {
     --bg: #0e0f12;
     --panel: #16181d;
     --ink: #e8e9ec;
     --muted: #9aa0aa;
+    --faint: #6a7080;
     --line: #2a2e36;
     --accent: #7cc4ff;
   }
@@ -18,27 +19,113 @@
     font: 16px/1.6 ui-sans-serif, -apple-system, system-ui, sans-serif; }
   main { max-width: 720px; margin: 0 auto; padding: 80px 24px 96px; }
   h1 { font-size: 32px; letter-spacing: -0.01em; margin: 0 0 8px; font-weight: 600; }
-  .lede { color: var(--muted); margin: 0 0 56px; font-size: 17px; }
-  ul { list-style: none; padding: 0; margin: 0; }
-  li { padding: 18px 0; border-top: 1px solid var(--line); }
-  li:last-child { border-bottom: 1px solid var(--line); }
-  a { color: var(--ink); text-decoration: none; display: block; }
-  a:hover { color: var(--accent); }
-  .title { font-size: 18px; font-weight: 500; margin: 0 0 4px; }
-  .blurb { color: var(--muted); font-size: 14px; margin: 0; }
-  footer { margin-top: 56px; color: var(--muted); font-size: 13px; }
-  footer a { display: inline; color: var(--muted); text-decoration: underline; }
+  .lede { color: var(--muted); margin: 0 0 4px; font-size: 17px; }
+  .tagline { color: var(--faint); margin: 0 0 56px; font-size: 15px; font-style: italic; }
+
+  h2 {
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 11px;
+    color: var(--faint);
+    font-weight: 600;
+    margin: 48px 0 18px;
+  }
+  h2:first-of-type { margin-top: 0; }
+
+  /* Platform grid */
+  .platforms {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 540px) {
+    .platforms { grid-template-columns: 1fr; }
+  }
+  .platform {
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 18px 16px 14px;
+    color: var(--ink);
+    text-decoration: none;
+    transition: border-color 120ms ease, transform 120ms ease;
+    min-height: 132px;
+  }
+  .platform:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .platform .where {
+    font-size: 14px;
+    font-weight: 500;
+    margin: 0 0 6px;
+  }
+  .platform .what {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0 0 14px;
+    flex-grow: 1;
+  }
+  .platform .action {
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  /* Essays list */
+  ul.essays { list-style: none; padding: 0; margin: 0; }
+  ul.essays li { padding: 18px 0; border-top: 1px solid var(--line); }
+  ul.essays li:last-child { border-bottom: 1px solid var(--line); }
+  ul.essays a { color: var(--ink); text-decoration: none; display: block; }
+  ul.essays a:hover { color: var(--accent); }
+  ul.essays .title { font-size: 18px; font-weight: 500; margin: 0 0 4px; }
+  ul.essays .blurb { color: var(--muted); font-size: 14px; margin: 0; }
+
+  footer {
+    margin-top: 56px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  footer a { color: var(--muted); text-decoration: underline; }
   footer a:hover { color: var(--accent); }
 </style>
 </head>
 <body>
 <main>
-  <h1>Breathe — essays</h1>
-  <p class="lede">A few short pieces in which I look at the breath
-    from different points of view. Each is its own page; each can be
-    read on its own.</p>
+  <h1>Breathe</h1>
+  <p class="lede">A breathing metronome with rounds. Three surfaces,
+    one breath.</p>
+  <p class="tagline">The machine breathes. You fall in.</p>
 
-  <ul>
+  <h2>Get it</h2>
+  <div class="platforms">
+    <a class="platform" href="https://breathwork-v2.vercel.app">
+      <p class="where">Web</p>
+      <p class="what">Open in the browser. Runs on anything with a
+        speaker.</p>
+      <span class="action">Open →</span>
+    </a>
+    <a class="platform"
+       href="https://github.com/deshpanderitwik/breathwork-v2#macos">
+      <p class="where">macOS</p>
+      <p class="what">Menu bar app. Build from source — one
+        <code>make run</code>.</p>
+      <span class="action">Build →</span>
+    </a>
+    <a class="platform"
+       href="https://github.com/deshpanderitwik/breathwork-v2#ios">
+      <p class="where">iOS</p>
+      <p class="what">Full-screen, locked-screen audio. Build from
+        source with a free Apple ID.</p>
+      <span class="action">Build →</span>
+    </a>
+  </div>
+
+  <h2>Essays</h2>
+  <ul class="essays">
     <li>
       <a href="breath-and-body/">
         <p class="title">Breath &amp; body</p>
