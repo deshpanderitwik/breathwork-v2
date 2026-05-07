@@ -542,11 +542,14 @@
         cycle.</span></li>
   </ul>
 
-  <p>The end result: the chime stays in time across a phone call, an
-    AirPods connect, a backgrounded screen lock, and ten minutes of
-    rest-and-active rounds. The metronome locks to the audio clock,
-    and the audio clock keeps running through anything that isn't
-    a hardware reset.</p>
+  <p>The end result: a session survives whatever iOS throws at it.
+    Phone calls and Siri pause the metronome gracefully and resume it
+    on hangup; AirPods swaps and screen locks recover transparently
+    without pausing; rest-to-active boundaries flush the queued audio
+    and re-anchor against the next round's first chime. After every
+    one of these, the next chime lands exactly where it would have if
+    nothing had happened — the audio clock re-anchors against the
+    current effective time on every recovery.</p>
 
   <footer>
     <a href="../">← Breathe</a> ·
