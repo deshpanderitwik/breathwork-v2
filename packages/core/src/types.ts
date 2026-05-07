@@ -106,6 +106,28 @@ export interface Session {
   /** Advance time. Returns events to fire at or before effective time. */
   tick(nowMs: number): readonly SessionEvent[];
 
+  /**
+   * Pull events whose atMs falls within the lookahead window
+   * (effective(nowMs), effective(nowMs) + lookaheadMs]. Used by hosts that
+   * pre-schedule audio against the audio engine's own clock — the events
+   * returned here have not yet sounded, but their atMs is the precise
+   * future moment they should sound at.
+   *
+   * Maintains its own cursor, so calling tickAudio() does not consume
+   * events from tick() and vice versa. The two cursors can be re-aligned
+   * via rewindAudioCursor() when the host needs to cancel queued chimes
+   * (e.g. on pause).
+   */
+  tickAudio(nowMs: number, lookaheadMs: number): readonly SessionEvent[];
+
+  /**
+   * Roll the audio cursor back to the fired (tick) cursor. After this call,
+   * tickAudio() will re-emit any events that were dispatched to audio
+   * earlier but have not yet fired through tick(). Hosts use this on pause
+   * after cancelling queued chimes, so that resume re-schedules them.
+   */
+  rewindAudioCursor(): void;
+
   /** Pause: freeze effective time. Idempotent — no-op if already paused or stopped. */
   pause(nowMs: number): void;
 

@@ -19,16 +19,49 @@
  *   - The ToneSet interface is the swap point for more musical tones later.
  *   - Different ToneSet implementations can deliver different tone palettes.
  */
+/**
+ * Handle returned by scheduled chime playback. Allows the host to cancel a
+ * chime that was queued in the lookahead window but has not yet sounded —
+ * needed when the user pauses between scheduling and audible firing.
+ *
+ * cancel() is a no-op once the chime has already played.
+ */
+export interface ScheduledChime {
+  cancel(): void;
+}
+
 export interface ToneSet {
   /**
-   * Play one inhale chime starting now. Single-shot — the state machine
-   * emits one count event per beat and the engine plays one chime per
-   * event. Pause/resume "just works" because there's nothing queued past
-   * the moment of the call.
+   * Anchor the audio clock to session t=0. Called once when the session
+   * starts, before any scheduleChimeAt() calls. Each implementation captures
+   * its own clock (AudioContext.currentTime on web, sample-time on Swift)
+   * so it can map session-relative ms to its own future-scheduling units.
+   */
+  beginSession(): void;
+
+  /**
+   * Schedule one inhale chime to sound at exactly `sessionMs` past
+   * beginSession(). The audio engine's own high-precision clock decides
+   * when the buffer plays, so polling jitter on the calling side does not
+   * affect the audible moment.
+   *
+   * If the target time is in the past relative to the audio clock (e.g. the
+   * caller is late), the chime plays as soon as possible — same behavior as
+   * the legacy playInhaleChime().
+   */
+  scheduleInhaleChimeAt(sessionMs: number): ScheduledChime;
+
+  /** As above, for exhale. */
+  scheduleExhaleChimeAt(sessionMs: number): ScheduledChime;
+
+  /**
+   * Play one inhale chime starting now. Legacy single-shot path — kept for
+   * platforms that have not yet adopted the scheduled API. New code should
+   * prefer scheduleInhaleChimeAt() for sample-accurate timing.
    */
   playInhaleChime(): void;
 
-  /** Play one exhale chime starting now. Single-shot. */
+  /** Play one exhale chime starting now. Single-shot. Legacy. */
   playExhaleChime(): void;
 
   /**

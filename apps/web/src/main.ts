@@ -1,12 +1,20 @@
 import {
   PRESETS,
   createSession,
+  type ScheduledChime,
   type Session,
   type SessionConfig,
   type SessionEvent,
   type ToneSet,
 } from "@breathe/core";
 import createWebAudioToneSet from "./audio/web-audio-tone-set.js";
+
+/**
+ * How far ahead of "now" we pre-schedule audio. Must comfortably exceed the
+ * polling cadence (rAF ~16 ms) so events are always queued in the future
+ * relative to the audio clock, even if the rAF tick is late.
+ */
+const AUDIO_LOOKAHEAD_MS = 150;
 
 interface FieldSpec {
   key: keyof SessionConfig;
@@ -82,6 +90,12 @@ let sessionStartPerfMs = 0;
 let isPaused = false;
 let currentPhaseLabel = "";
 let currentRound = 1;
+/**
+ * Cancel handles for chimes that have been pre-scheduled to the audio engine
+ * but have not yet sounded. We hold them so pause() can silence anything
+ * queued past the freeze point.
+ */
+let pendingChimes: ScheduledChime[] = [];
 
 function totalDurationSec(c: SessionConfig): number {
   return c.rounds * (c.activeSec + c.restSec);
@@ -315,16 +329,29 @@ function onStart(): void {
   render();
 
   sessionStartPerfMs = performance.now();
+  // Anchor the audio engine's clock to session t=0 BEFORE any
+  // scheduleChimeAt() calls so the first round lands sample-accurately.
+  tones?.beginSession();
   const initial = session.start(0);
-  handleEvents(initial);
+  // Initial events fired at t=0: feed the audio path too so the first
+  // chime is queued via the scheduled API rather than slipping through
+  // tick() alone (which would never play it audibly).
+  scheduleAudio(initial);
+  handleUiEvents(initial);
 
   const tick = () => {
     if (!session) return;
     const nowMs = performance.now() - sessionStartPerfMs;
     // session.effectiveMs() freezes during pause — timeline halts cleanly.
     updateTimeline(session.effectiveMs(nowMs));
+    // Audio path: pre-schedule any events landing within the lookahead.
+    // Their atMs values become absolute audio-clock targets — sample-accurate
+    // regardless of whether THIS rAF tick is on time.
+    const audioEvents = session.tickAudio(nowMs, AUDIO_LOOKAHEAD_MS);
+    if (audioEvents.length > 0) scheduleAudio(audioEvents);
+    // UI path: only update labels at the actual audible moment.
     const events = session.tick(nowMs);
-    if (events.length > 0) handleEvents(events);
+    if (events.length > 0) handleUiEvents(events);
   };
   const rafLoop = () => {
     tick();
@@ -343,6 +370,10 @@ function onPauseResume(): void {
     isPaused = false;
   } else {
     session.pause(nowMs);
+    // Cancel chimes pre-scheduled past the freeze point, then rewind the
+    // audio cursor so resume re-queues them at their (now shifted) atMs.
+    flushPendingChimes();
+    session.rewindAudioCursor();
     tones?.fadeOut({ fadeSec: 0.05 });
     isPaused = true;
   }
@@ -364,6 +395,7 @@ function teardownSession(): void {
     clearInterval(intervalHandle);
     intervalHandle = null;
   }
+  flushPendingChimes();
   if (session) {
     session.stop();
     session = null;
@@ -374,7 +406,46 @@ function teardownSession(): void {
   }
 }
 
-function handleEvents(events: readonly SessionEvent[]): void {
+/**
+ * Pre-schedule audio events against the engine's own clock. Called from the
+ * tickAudio path with events whose atMs falls in the lookahead window. Each
+ * scheduled chime returns a cancel handle we hold so pause() can flush.
+ *
+ * rest-start fadeOut fires immediately because it acts on currently-ringing
+ * voices, not on scheduled future buffers — there's nothing to anchor.
+ */
+function scheduleAudio(events: readonly SessionEvent[]): void {
+  if (!tones) return;
+  for (const ev of events) {
+    try {
+      switch (ev.kind) {
+        case "inhale-count":
+          pendingChimes.push(tones.scheduleInhaleChimeAt(ev.atMs));
+          break;
+        case "exhale-count":
+          pendingChimes.push(tones.scheduleExhaleChimeAt(ev.atMs));
+          break;
+        case "rest-start":
+          tones.fadeOut({ fadeSec: ev.fadeOutSec });
+          break;
+      }
+    } catch (err) {
+      console.error("audio scheduling error", err);
+    }
+  }
+  // Drop fully-played handles so the array doesn't grow unbounded across a
+  // long session. cancel() is a no-op once played, so this is just hygiene.
+  if (pendingChimes.length > 64) {
+    pendingChimes = pendingChimes.slice(-32);
+  }
+}
+
+/**
+ * UI updates fire at the actual audible moment (driven by tick(), which
+ * advances the fired cursor). This keeps labels in sync with sound even
+ * though audio was scheduled ahead of time.
+ */
+function handleUiEvents(events: readonly SessionEvent[]): void {
   for (const ev of events) {
     switch (ev.kind) {
       case "inhale-count":
@@ -396,26 +467,22 @@ function handleEvents(events: readonly SessionEvent[]): void {
     }
     updateSessionUI();
 
-    try {
-      switch (ev.kind) {
-        case "inhale-count":
-          tones?.playInhaleChime();
-          break;
-        case "exhale-count":
-          tones?.playExhaleChime();
-          break;
-        case "rest-start":
-          tones?.fadeOut({ fadeSec: ev.fadeOutSec });
-          break;
-      }
-    } catch (err) {
-      console.error("audio error", err);
-    }
-
     if (ev.kind === "session-complete") {
       teardownSession();
       view = "setup";
       render();
+    }
+  }
+}
+
+function flushPendingChimes(): void {
+  const handles = pendingChimes;
+  pendingChimes = [];
+  for (const h of handles) {
+    try {
+      h.cancel();
+    } catch {
+      // ignore — already played or cancelled
     }
   }
 }

@@ -157,7 +157,15 @@ export function createSession(config: SessionConfig): Session {
   let phase: Phase = { kind: "idle" };
   let stopped = false;
   let queue: Array<{ atMs: number; event: SessionEvent }> = [];
-  let cursor = 0;
+  // Two cursors over the same queue:
+  //   firedCursor — advanced by tick(), drives UI / phase transitions at the
+  //                 moment events become audible.
+  //   audioCursor — advanced by tickAudio(), drives pre-scheduled audio
+  //                 against the engine's clock. Always >= firedCursor.
+  // The cursors are re-aligned by rewindAudioCursor() when the host needs to
+  // cancel queued audio (e.g. on pause).
+  let firedCursor = 0;
+  let audioCursor = 0;
   // Pause arithmetic. While paused, effective time freezes at `pausedAtMs`
   // (the nowMs passed to pause()). On resume, totalPausedMs accumulates the
   // wall-clock duration of the pause, so subsequent ticks compute effective
@@ -173,13 +181,35 @@ export function createSession(config: SessionConfig): Session {
   function drain(nowMs: number): readonly SessionEvent[] {
     const effective = effectiveMs(nowMs);
     const events: SessionEvent[] = [];
-    while (cursor < queue.length) {
-      const entry = queue[cursor];
+    while (firedCursor < queue.length) {
+      const entry = queue[firedCursor];
       if (!entry || entry.atMs > effective) break;
-      cursor++;
+      firedCursor++;
       events.push(entry.event);
       const next = phaseFromEvent(entry.event);
       if (next !== null) phase = next;
+    }
+    // The audio cursor must never lag the fired cursor — if a tick consumes
+    // events the audio cursor hasn't seen yet (no host using tickAudio, or
+    // pre-rewind state), keep them in step.
+    if (audioCursor < firedCursor) audioCursor = firedCursor;
+    return events;
+  }
+
+  function drainAudio(
+    nowMs: number,
+    lookaheadMs: number,
+  ): readonly SessionEvent[] {
+    // While paused, effective time is frozen — surface no new events for
+    // pre-scheduling. The host has typically just cancelled queued audio.
+    if (pausedAtMs !== null) return [];
+    const horizon = effectiveMs(nowMs) + lookaheadMs;
+    const events: SessionEvent[] = [];
+    while (audioCursor < queue.length) {
+      const entry = queue[audioCursor];
+      if (!entry || entry.atMs > horizon) break;
+      audioCursor++;
+      events.push(entry.event);
     }
     return events;
   }
@@ -188,7 +218,8 @@ export function createSession(config: SessionConfig): Session {
     start(nowMs: number): readonly SessionEvent[] {
       if (stopped) return [];
       queue = buildSchedule(config, 0, totalDurationSec);
-      cursor = 0;
+      firedCursor = 0;
+      audioCursor = 0;
       pausedAtMs = null;
       totalPausedMs = nowMs; // so effective time starts at 0 regardless of nowMs
       return drain(nowMs);
@@ -197,6 +228,15 @@ export function createSession(config: SessionConfig): Session {
     tick(nowMs: number): readonly SessionEvent[] {
       if (stopped || queue.length === 0) return [];
       return drain(nowMs);
+    },
+
+    tickAudio(nowMs: number, lookaheadMs: number): readonly SessionEvent[] {
+      if (stopped || queue.length === 0) return [];
+      return drainAudio(nowMs, lookaheadMs);
+    },
+
+    rewindAudioCursor(): void {
+      audioCursor = firedCursor;
     },
 
     pause(nowMs: number): void {
@@ -214,6 +254,8 @@ export function createSession(config: SessionConfig): Session {
       stopped = true;
       phase = { kind: "idle" };
       queue = [];
+      firedCursor = 0;
+      audioCursor = 0;
       pausedAtMs = null;
     },
 

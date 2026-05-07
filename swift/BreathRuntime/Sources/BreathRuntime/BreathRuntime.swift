@@ -299,6 +299,39 @@ public final class SessionHandle {
         invoke("tick", arg: nowMs)
     }
 
+    /// Pull events whose atMs falls within (effective(now), effective(now)
+    /// + lookaheadMs]. Lets the host pre-schedule audio against the audio
+    /// engine's own clock so polling-tick jitter does not affect the
+    /// audible moment. Maintains a cursor independent of `tick`.
+    public func tickAudio(nowMs: Double, lookaheadMs: Double) -> [SessionEvent] {
+        guard let result = jsSession.invokeMethod(
+            "tickAudio", withArguments: [nowMs, lookaheadMs]
+        ) else {
+            _ = runtime.takeException()
+            return []
+        }
+        _ = runtime.takeException()
+        guard result.isArray else { return [] }
+        let count = Int(result.objectForKeyedSubscript("length")?.toInt32() ?? 0)
+        var events: [SessionEvent] = []
+        events.reserveCapacity(count)
+        for i in 0..<count {
+            if let item = result.atIndex(i), let event = SessionEvent(jsValue: item) {
+                events.append(event)
+            }
+        }
+        return events
+    }
+
+    /// Roll the audio cursor back to the fired (tick) cursor. After this
+    /// call, `tickAudio` will re-emit any events that were dispatched to
+    /// audio earlier but have not yet fired through `tick`. Used on pause
+    /// so resume re-schedules the chimes that were just cancelled.
+    public func rewindAudioCursor() {
+        _ = jsSession.invokeMethod("rewindAudioCursor", withArguments: [])
+        _ = runtime.takeException()
+    }
+
     public func pause(nowMs: Double) {
         _ = jsSession.invokeMethod("pause", withArguments: [nowMs])
         _ = runtime.takeException()

@@ -17,7 +17,12 @@
  * is queued past the moment of the call.
  */
 
-import { TONE_DESIGN, type ToneDesign, type ToneSet } from "@breathe/core";
+import {
+  TONE_DESIGN,
+  type ScheduledChime,
+  type ToneDesign,
+  type ToneSet,
+} from "@breathe/core";
 
 interface ScheduledVoice {
   source: AudioBufferSourceNode;
@@ -29,6 +34,12 @@ class WebAudioToneSet implements ToneSet {
   private inhaleBuffer: AudioBuffer;
   private exhaleBuffer: AudioBuffer;
   private activeVoices: ScheduledVoice[] = [];
+  /**
+   * AudioContext.currentTime captured at session start. Maps session-relative
+   * ms (from event.atMs) to absolute audio-clock seconds:
+   *   audioTime = sessionStartCtxTime + sessionMs / 1000
+   */
+  private sessionStartCtxTime: number | null = null;
 
   constructor(design: ToneDesign = TONE_DESIGN) {
     this.context = new AudioContext();
@@ -43,6 +54,18 @@ class WebAudioToneSet implements ToneSet {
   // ---------------------------------------------------------------------------
   // Public interface
   // ---------------------------------------------------------------------------
+
+  beginSession(): void {
+    this.sessionStartCtxTime = this.context.currentTime;
+  }
+
+  scheduleInhaleChimeAt(sessionMs: number): ScheduledChime {
+    return this._scheduleAt(this.inhaleBuffer, sessionMs);
+  }
+
+  scheduleExhaleChimeAt(sessionMs: number): ScheduledChime {
+    return this._scheduleAt(this.exhaleBuffer, sessionMs);
+  }
 
   playInhaleChime(): void {
     this._resetMasterGain();
@@ -73,6 +96,7 @@ class WebAudioToneSet implements ToneSet {
   }
 
   stop(): void {
+    this.sessionStartCtxTime = null;
     const voices = this.activeVoices.slice();
     this.activeVoices = [];
     for (const { source } of voices) {
@@ -139,6 +163,51 @@ class WebAudioToneSet implements ToneSet {
     };
 
     this.activeVoices.push({ source });
+  }
+
+  /**
+   * Sample-accurate scheduling against the AudioContext clock. The audio
+   * engine's hardware clock decides when the buffer plays, so polling jitter
+   * on the caller no longer affects the audible moment.
+   *
+   * If beginSession() was never called, falls back to "play now" — same
+   * behavior as the legacy path. If the target is in the past (caller is
+   * late), AudioContext clamps to currentTime and plays immediately.
+   */
+  private _scheduleAt(
+    buffer: AudioBuffer,
+    sessionMs: number,
+  ): ScheduledChime {
+    this._resetMasterGain();
+    const target =
+      this.sessionStartCtxTime !== null
+        ? this.sessionStartCtxTime + sessionMs / 1000
+        : this.context.currentTime;
+    const startAt = Math.max(target, this.context.currentTime);
+
+    const source = this.context.createBufferSource();
+    source.buffer = buffer;
+    source.connect(this.masterGain);
+    source.start(startAt);
+
+    let played = false;
+    source.onended = () => {
+      played = true;
+      source.disconnect();
+      this.activeVoices = this.activeVoices.filter((v) => v.source !== source);
+    };
+    this.activeVoices.push({ source });
+
+    return {
+      cancel: () => {
+        if (played) return;
+        try {
+          source.stop();
+        } catch {
+          // Already stopped — fine.
+        }
+      },
+    };
   }
 
   private _resetMasterGain(): void {

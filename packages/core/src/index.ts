@@ -5,7 +5,7 @@ export type {
   SessionEvent,
 } from "./types.js";
 
-export type { ToneSet } from "./tone-set.js";
+export type { ScheduledChime, ToneSet } from "./tone-set.js";
 export {
   ACTIVE_TO_REST_FADE_SEC,
   DEFAULT_FADE_IN_SEC,
