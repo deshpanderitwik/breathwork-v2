@@ -39,6 +39,9 @@ public struct SettingsView: View {
             intRow("Rounds", unit: "", field: .rounds,
                    get: { config.rounds }, set: { config.rounds = $0 })
 
+            #if !os(iOS)
+            // macOS menu-bar popover renders Total here; iOS shows it in
+            // RootView next to the Start button, so we omit it on iOS.
             Divider()
 
             HStack {
@@ -49,6 +52,7 @@ public struct SettingsView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
+            #endif
         }
         #if os(iOS)
         .toolbar {
