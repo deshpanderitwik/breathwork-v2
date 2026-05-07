@@ -48,7 +48,7 @@
     margin: 64px 0 18px;
   }
   h2.label:first-of-type { margin-top: 0; }
-  .essay-lede { color: var(--muted); margin: 0 0 4px; font-size: 16px; }
+  .essay-lede { color: var(--muted); margin: 64px 0 4px; font-size: 16px; }
   .essay-sub { color: var(--faint); font-size: 13px; margin: 0 0 32px; }
 
   a { color: var(--accent); }
@@ -212,6 +212,22 @@
     margin: 0 0 14px;
   }
 
+  .more-link {
+    margin: 32px 0 0;
+    text-align: center;
+    font-size: 14px;
+  }
+  .more-link a {
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--line);
+    padding-bottom: 2px;
+  }
+  .more-link a:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
   footer {
     margin-top: 56px;
     color: var(--faint);
@@ -256,7 +272,6 @@
   <!--                         Essay                                  -->
   <!-- ============================================================== -->
 
-  <h2>Breath &amp; body</h2>
   <p class="essay-lede">What happens inside me when I breathe along to
     a metronome.</p>
   <p class="essay-sub">A flow chart of what's going on, top to bottom:
@@ -429,6 +444,10 @@
       hands, so my body can give that attention back to the rest of
       the cascade.</p>
   </section>
+
+  <p class="more-link">
+    <a href="implementation/">View implementation details →</a>
+  </p>
 
   <footer>
     <a href="https://github.com/deshpanderitwik/breathwork-v2">

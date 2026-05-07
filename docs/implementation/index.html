@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Breathe — implementation details</title>
+<style>
+  :root {
+    --bg: #0e0f12;
+    --panel: #16181d;
+    --ink: #e8e9ec;
+    --muted: #9aa0aa;
+    --faint: #6a7080;
+    --line: #2a2e36;
+    --accent: #7cc4ff;
+
+    --sound: #ffb86b;
+    --sense: #7cc4ff;
+    --will:  #b48cff;
+    --body:  #ff8a8a;
+    --rest:  #74e3a5;
+    --mind:  #ffd28a;
+
+    --intent: #7cc4ff;
+    --poll:   #ffb86b;
+    --fire:   #ff6b6b;
+    --fixed:  #74e3a5;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.65 ui-sans-serif, -apple-system, system-ui, sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 80px 24px 96px; }
+
+  .back {
+    color: var(--faint);
+    text-decoration: none;
+    font-size: 13px;
+    display: inline-block;
+    margin-bottom: 28px;
+  }
+  .back:hover { color: var(--accent); }
+
+  h1 { font-size: 32px; letter-spacing: -0.01em; margin: 0 0 8px; font-weight: 600; }
+  .lede { color: var(--muted); margin: 0 0 56px; font-size: 17px; }
+
+  h2 {
+    font-size: 20px; font-weight: 600; letter-spacing: -0.005em;
+    margin: 64px 0 12px;
+  }
+  h3 {
+    font-size: 13px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--faint); margin: 28px 0 8px;
+  }
+
+  p { color: var(--ink); margin: 0 0 14px; }
+  p.muted { color: var(--muted); font-size: 14.5px; }
+  code {
+    background: #1d2026; padding: 1px 6px; border-radius: 4px;
+    font-size: 0.92em; color: #d8e2ee;
+  }
+  pre {
+    background: #1d2026; border: 1px solid var(--line);
+    border-radius: 8px; padding: 14px 16px; overflow-x: auto;
+    font-size: 13px; color: #d8e2ee; line-height: 1.55;
+    margin: 14px 0;
+  }
+  pre code { background: none; padding: 0; }
+  a { color: var(--accent); }
+
+  /* SVG figures */
+  figure { margin: 28px 0; }
+  figcaption {
+    color: var(--faint); font-size: 12.5px; text-align: center;
+    margin-top: 10px;
+  }
+  svg { display: block; width: 100%; height: auto; }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 12px 22px;
+    font-size: 12.5px; color: var(--muted);
+    justify-content: center; margin-top: 14px;
+  }
+  .legend .k { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+  /* Pull-quote / callout */
+  .callout {
+    background: rgba(124, 196, 255, 0.06);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 18px 0;
+    color: var(--muted);
+    font-size: 14.5px;
+  }
+  .callout strong { color: var(--ink); font-weight: 500; }
+
+  ul.list { list-style: none; padding: 0; margin: 12px 0; }
+  ul.list li {
+    color: var(--ink); font-size: 14.5px;
+    padding: 10px 0 10px 18px; position: relative;
+    border-top: 1px solid var(--line);
+  }
+  ul.list li:last-child { border-bottom: 1px solid var(--line); }
+  ul.list li::before {
+    content: "·"; color: var(--faint); position: absolute;
+    left: 0; top: 8px; font-size: 18px;
+  }
+  ul.list li strong { font-weight: 500; }
+  ul.list li .why {
+    display: block; color: var(--muted); font-size: 13px;
+    margin-top: 4px;
+  }
+
+  footer {
+    margin-top: 72px; padding-top: 24px; border-top: 1px solid var(--line);
+    color: var(--faint); font-size: 13px;
+  }
+  footer a { color: var(--faint); text-decoration: underline; }
+  footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <a href="../" class="back">← Breathe</a>
+
+  <h1>Implementation details</h1>
+  <p class="lede">How the breath app is wired up under the hood.
+    Three platforms, one state machine, and a small but specific
+    fix that makes the metronome stop wobbling.</p>
+
+  <!-- ===================================================================== -->
+  <h2>Three platforms, one state machine</h2>
+  <p>The web app, the macOS menu bar app, and the iOS app are three
+    different shells around the same TypeScript module. The shared
+    code lives at <code>packages/core/</code> and is built into two
+    artifacts: an ES module the web app imports directly, and an IIFE
+    bundle the Apple apps load into a JavaScriptCore VM.</p>
+
+  <figure>
+    <svg viewBox="0 0 720 320" aria-label="Three platforms one state machine">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5"
+                markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#9aa0aa" />
+        </marker>
+      </defs>
+      <g font-family="ui-sans-serif, system-ui">
+        <!-- Top row: three platform boxes -->
+        <g>
+          <rect x="20"  y="30" width="200" height="100" rx="10"
+                fill="#1d2026" stroke="#7cc4ff" stroke-width="1.5"/>
+          <text x="120" y="62" text-anchor="middle" font-size="14"
+                font-weight="600" fill="#7cc4ff">Web</text>
+          <text x="120" y="84" text-anchor="middle" font-size="11"
+                fill="#9aa0aa">Vite SPA · Web Audio</text>
+          <text x="120" y="108" text-anchor="middle" font-size="10"
+                fill="#6a7080" font-family="ui-monospace, Menlo, monospace">
+            apps/web</text>
+        </g>
+        <g>
+          <rect x="260" y="30" width="200" height="100" rx="10"
+                fill="#1d2026" stroke="#ffb86b" stroke-width="1.5"/>
+          <text x="360" y="62" text-anchor="middle" font-size="14"
+                font-weight="600" fill="#ffb86b">macOS</text>
+          <text x="360" y="84" text-anchor="middle" font-size="11"
+                fill="#9aa0aa">menu bar · AVAudioEngine</text>
+          <text x="360" y="108" text-anchor="middle" font-size="10"
+                fill="#6a7080" font-family="ui-monospace, Menlo, monospace">
+            apps/macos</text>
+        </g>
+        <g>
+          <rect x="500" y="30" width="200" height="100" rx="10"
+                fill="#1d2026" stroke="#ff6b6b" stroke-width="1.5"/>
+          <text x="600" y="62" text-anchor="middle" font-size="14"
+                font-weight="600" fill="#ff6b6b">iOS</text>
+          <text x="600" y="84" text-anchor="middle" font-size="11"
+                fill="#9aa0aa">SwiftUI · AVAudioEngine</text>
+          <text x="600" y="108" text-anchor="middle" font-size="10"
+                fill="#6a7080" font-family="ui-monospace, Menlo, monospace">
+            apps/ios</text>
+        </g>
+
+        <!-- Arrows down to core -->
+        <line x1="120" y1="135" x2="200" y2="220"
+              stroke="#9aa0aa" stroke-width="1.2" marker-end="url(#ar)"/>
+        <line x1="360" y1="135" x2="360" y2="220"
+              stroke="#9aa0aa" stroke-width="1.2" marker-end="url(#ar)"/>
+        <line x1="600" y1="135" x2="520" y2="220"
+              stroke="#9aa0aa" stroke-width="1.2" marker-end="url(#ar)"/>
+
+        <!-- Annotations -->
+        <text x="135" y="180" text-anchor="middle" font-size="10"
+              fill="#9aa0aa">ES module</text>
+        <text x="395" y="180" text-anchor="middle" font-size="10"
+              fill="#9aa0aa">JavaScriptCore</text>
+        <text x="585" y="180" text-anchor="middle" font-size="10"
+              fill="#9aa0aa">JavaScriptCore</text>
+
+        <!-- Core box -->
+        <g>
+          <rect x="160" y="225" width="400" height="76" rx="10"
+                fill="#1d2026" stroke="#74e3a5" stroke-width="1.5"/>
+          <text x="360" y="255" text-anchor="middle" font-size="14"
+                font-weight="600" fill="#74e3a5">packages/core</text>
+          <text x="360" y="275" text-anchor="middle" font-size="11"
+                fill="#9aa0aa">TypeScript · state machine · tone design · presets</text>
+          <text x="360" y="293" text-anchor="middle" font-size="10"
+                fill="#6a7080" font-family="ui-monospace, Menlo, monospace">
+            built to dist/index.js + dist/core.iife.js</text>
+        </g>
+      </g>
+    </svg>
+    <figcaption>Three platform shells around one shared TypeScript core.</figcaption>
+  </figure>
+
+  <p>The choice is deliberate. The hard problem in this app is timing —
+    making chimes land at the right millisecond, even after a pause,
+    even after iOS interrupts the audio session. By keeping the
+    schedule logic in one place, written in one language, I have one
+    set of contract tests that govern all three apps. Drift between
+    web and Swift becomes a test failure, not a heisenbug.</p>
+
+  <p class="muted">Audio synthesis stays native per platform — Web
+    Audio for the browser, AVAudioEngine for Apple. The same
+    <code>TONE_DESIGN</code> constants drive both, so the chime
+    waveform is bit-identical across surfaces; the only thing that
+    differs is the engine that renders it.</p>
+
+  <!-- ===================================================================== -->
+  <h2>What the state machine does</h2>
+  <p>At session start, the core compiles a fixed schedule of events:</p>
+
+<pre><code>{ kind: "inhale-count",  round: 1, beatIndex: 0, beatsInPhase: 4, atMs: 0 }
+{ kind: "inhale-count",  round: 1, beatIndex: 1, beatsInPhase: 4, atMs: 1000 }
+...
+{ kind: "exhale-count",  round: 1, beatIndex: 0, beatsInPhase: 6, atMs: 4000 }
+...
+{ kind: "rest-start",    round: 1, durationSec: 30, fadeOutSec: 1.5, atMs: 90000 }
+{ kind: "round-complete", round: 1, atMs: 120000 }
+...
+{ kind: "session-complete", atMs: 480000 }
+</code></pre>
+
+  <p>The host (web app or Swift app) calls <code>tick(nowMs)</code> on
+    a polling loop and gets back any events whose <code>atMs</code>
+    has passed. Pause arithmetic is internal to the state machine — the
+    host calls <code>pause()</code> / <code>resume()</code> at user
+    gestures and the engine freezes effective time accordingly.</p>
+
+  <p>There are <em>two</em> cursors over the schedule:</p>
+
+  <ul class="list">
+    <li><strong>Fired cursor</strong> — advanced by <code>tick()</code>.
+      Drives the UI. Each event fires the moment it becomes audible.
+      <span class="why">Used to swap the "Inhale" / "Exhale" label and
+        update the round counter.</span></li>
+    <li><strong>Audio cursor</strong> — advanced by
+      <code>tickAudio(nowMs, lookaheadMs)</code>. Returns events
+      whose atMs falls inside a 150–250&nbsp;ms lookahead window.
+      <span class="why">Used to pre-schedule chimes against the audio
+        engine's own clock — see "the chime stays in time" below.</span></li>
+  </ul>
+
+  <p>The two cursors operate independently over the same schedule.
+    The audio cursor is always at or ahead of the fired cursor; on
+    pause, the host calls <code>rewindAudioCursor()</code> to pull it
+    back so the cancelled chimes get re-scheduled on resume.</p>
+
+  <!-- ===================================================================== -->
+  <h2>Three pieces in dialogue</h2>
+  <p>The runtime architecture is three actors: the state machine, the
+    poll loop, and the audio engine. The poll loop in the middle is
+    the only active component — it pulls from the state machine and
+    pushes to the audio engine.</p>
+
+  <figure>
+    <svg viewBox="0 0 720 290" aria-label="Three pieces in dialogue">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5"
+                markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#9aa0aa" />
+        </marker>
+        <marker id="arrFire" viewBox="0 0 10 10" refX="9" refY="5"
+                markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#ff6b6b" />
+        </marker>
+      </defs>
+
+      <!-- State machine -->
+      <g font-family="ui-sans-serif, system-ui">
+        <rect x="10" y="80" width="200" height="170" rx="12"
+              fill="#1d2026" stroke="#7cc4ff" stroke-width="1.5"/>
+        <text x="110" y="108" text-anchor="middle" font-size="14"
+              font-weight="600" fill="#7cc4ff">STATE MACHINE</text>
+        <text x="110" y="128" text-anchor="middle" font-size="12" fill="#9aa0aa">the schedule</text>
+        <line x1="30" y1="142" x2="190" y2="142" stroke="#2a2e36"/>
+        <text x="110" y="166" text-anchor="middle" font-size="11" fill="#e8e9ec">pure TypeScript</text>
+        <text x="110" y="186" text-anchor="middle" font-size="11" fill="#e8e9ec">passive · no clock</text>
+        <text x="110" y="206" text-anchor="middle" font-size="11" fill="#e8e9ec">no audio APIs</text>
+        <text x="110" y="232" text-anchor="middle" font-size="10" fill="#9aa0aa"
+              font-family="ui-monospace, Menlo, monospace">tick(nowMs) → events[]</text>
+      </g>
+
+      <!-- Poll loop -->
+      <g font-family="ui-sans-serif, system-ui">
+        <rect x="260" y="50" width="200" height="230" rx="12"
+              fill="#1d2026" stroke="#ffb86b" stroke-width="1.5"/>
+        <text x="360" y="78" text-anchor="middle" font-size="14"
+              font-weight="600" fill="#ffb86b">POLL LOOP</text>
+        <text x="360" y="98" text-anchor="middle" font-size="12" fill="#9aa0aa">the heartbeat</text>
+        <line x1="280" y1="112" x2="440" y2="112" stroke="#2a2e36"/>
+
+        <g>
+          <circle cx="315" cy="138" r="4" fill="#ffb86b">
+            <animate attributeName="opacity" values="1;0.15;1" dur="1.1s" repeatCount="indefinite" begin="0s"/>
+          </circle>
+          <circle cx="342" cy="138" r="4" fill="#ffb86b">
+            <animate attributeName="opacity" values="1;0.15;1" dur="1.1s" repeatCount="indefinite" begin="0.18s"/>
+          </circle>
+          <circle cx="369" cy="138" r="4" fill="#ffb86b">
+            <animate attributeName="opacity" values="1;0.15;1" dur="1.1s" repeatCount="indefinite" begin="0.36s"/>
+          </circle>
+          <circle cx="396" cy="138" r="4" fill="#ffb86b">
+            <animate attributeName="opacity" values="1;0.15;1" dur="1.1s" repeatCount="indefinite" begin="0.54s"/>
+          </circle>
+        </g>
+
+        <text x="360" y="174" text-anchor="middle" font-size="11" fill="#e8e9ec">rAF (web ~16 ms)</text>
+        <text x="360" y="192" text-anchor="middle" font-size="11" fill="#e8e9ec">Timer (Swift ~100 ms)</text>
+        <line x1="280" y1="208" x2="440" y2="208" stroke="#2a2e36"/>
+        <text x="360" y="232" text-anchor="middle" font-size="11" fill="#e8e9ec">on each tick:</text>
+        <text x="360" y="252" text-anchor="middle" font-size="10" fill="#9aa0aa"
+              font-family="ui-monospace, Menlo, monospace">ask schedule, dispatch events</text>
+      </g>
+
+      <!-- Audio engine -->
+      <g font-family="ui-sans-serif, system-ui">
+        <rect x="510" y="80" width="200" height="170" rx="12"
+              fill="#1d2026" stroke="#ff6b6b" stroke-width="1.5"/>
+        <text x="610" y="108" text-anchor="middle" font-size="14"
+              font-weight="600" fill="#ff6b6b">AUDIO ENGINE</text>
+        <text x="610" y="128" text-anchor="middle" font-size="12" fill="#9aa0aa">the speaker</text>
+        <line x1="530" y1="142" x2="690" y2="142" stroke="#2a2e36"/>
+        <text x="610" y="166" text-anchor="middle" font-size="11" fill="#e8e9ec">Web Audio /</text>
+        <text x="610" y="184" text-anchor="middle" font-size="11" fill="#e8e9ec">AVAudioEngine</text>
+        <text x="610" y="204" text-anchor="middle" font-size="11" fill="#e8e9ec">has its own clock</text>
+        <text x="610" y="232" text-anchor="middle" font-size="10" fill="#9aa0aa"
+              font-family="ui-monospace, Menlo, monospace">play(buffer, when?)</text>
+      </g>
+
+      <!-- Top arrow: poll asks state machine -->
+      <path d="M 260 138 Q 235 110 210 138" fill="none"
+            stroke="#9aa0aa" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="235" y="100" text-anchor="middle" font-size="11"
+            fill="#9aa0aa">"any events since T?"</text>
+
+      <!-- Bottom arrow: state machine returns events -->
+      <path d="M 210 200 Q 235 230 260 200" fill="none"
+            stroke="#9aa0aa" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="235" y="252" text-anchor="middle" font-size="11"
+            fill="#9aa0aa">events[]</text>
+
+      <!-- Right arrow: poll → audio engine -->
+      <line x1="460" y1="165" x2="510" y2="165"
+            stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrFire)"/>
+      <text x="485" y="155" text-anchor="middle" font-size="11"
+            fill="#ff6b6b">play this chime</text>
+    </svg>
+    <figcaption>The three actors. The state machine and audio engine
+      are passive; the poll loop is the only active component, ferrying
+      events between them.</figcaption>
+  </figure>
+
+  <!-- ===================================================================== -->
+  <h2>The chime stays in time</h2>
+  <p>The naive way to play a chime is "play it now, the moment the
+    poll loop notices the event." That's how the app worked at first.
+    The problem is that "now" depends on when the poll loop happens
+    to fire — <code>requestAnimationFrame</code> on web runs every
+    ~16 ms, Swift's <code>Timer</code> every ~100 ms. Each chime
+    inherited a fresh random delay, audible as a stumble in the
+    metronome.</p>
+
+  <figure>
+    <svg viewBox="0 0 720 280" aria-label="Before and after timing comparison">
+      <g font-family="ui-sans-serif, system-ui" font-size="11" fill="#9aa0aa">
+        <!-- Time axis ticks -->
+        <text x="20" y="30" font-size="11" fill="#6a7080">0s</text>
+        <text x="148" y="30" font-size="11" fill="#6a7080" text-anchor="middle">1s</text>
+        <text x="276" y="30" font-size="11" fill="#6a7080" text-anchor="middle">2s</text>
+        <text x="404" y="30" font-size="11" fill="#6a7080" text-anchor="middle">3s</text>
+        <text x="532" y="30" font-size="11" fill="#6a7080" text-anchor="middle">4s</text>
+        <text x="660" y="30" font-size="11" fill="#6a7080" text-anchor="middle">5s</text>
+
+        <!-- Row 1: BEFORE -->
+        <text x="0" y="78" fill="#e8e9ec" font-weight="500" font-size="13">Before</text>
+        <text x="0" y="94" fill="#9aa0aa" font-size="11">play "now"</text>
+        <!-- Grid -->
+        <line x1="20"  y1="60" x2="20"  y2="120" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="148" y1="60" x2="148" y2="120" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="276" y1="60" x2="276" y2="120" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="404" y1="60" x2="404" y2="120" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="532" y1="60" x2="532" y2="120" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="660" y1="60" x2="660" y2="120" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="20" y1="90" x2="660" y2="90" stroke="#2a2e36"/>
+        <!-- Intent ticks (small) -->
+        <circle cx="20"  cy="90" r="3" fill="#7cc4ff" opacity="0.6"/>
+        <circle cx="148" cy="90" r="3" fill="#7cc4ff" opacity="0.6"/>
+        <circle cx="276" cy="90" r="3" fill="#7cc4ff" opacity="0.6"/>
+        <circle cx="404" cy="90" r="3" fill="#7cc4ff" opacity="0.6"/>
+        <circle cx="532" cy="90" r="3" fill="#7cc4ff" opacity="0.6"/>
+        <circle cx="660" cy="90" r="3" fill="#7cc4ff" opacity="0.6"/>
+        <!-- Fire markers (jittered) -->
+        <line x1="29"  y1="74" x2="29"  y2="106" stroke="#ff6b6b" stroke-width="2"/>
+        <circle cx="29"  cy="90" r="5" fill="#ff6b6b"/>
+        <line x1="167" y1="74" x2="167" y2="106" stroke="#ff6b6b" stroke-width="2"/>
+        <circle cx="167" cy="90" r="5" fill="#ff6b6b"/>
+        <line x1="289" y1="74" x2="289" y2="106" stroke="#ff6b6b" stroke-width="2"/>
+        <circle cx="289" cy="90" r="5" fill="#ff6b6b"/>
+        <line x1="412" y1="74" x2="412" y2="106" stroke="#ff6b6b" stroke-width="2"/>
+        <circle cx="412" cy="90" r="5" fill="#ff6b6b"/>
+        <line x1="557" y1="74" x2="557" y2="106" stroke="#ff6b6b" stroke-width="2"/>
+        <circle cx="557" cy="90" r="5" fill="#ff6b6b"/>
+        <line x1="675" y1="74" x2="675" y2="106" stroke="#ff6b6b" stroke-width="2"/>
+        <circle cx="675" cy="90" r="5" fill="#ff6b6b"/>
+        <!-- Drift connector -->
+        <line x1="20"  y1="90" x2="29"  y2="90" stroke="#ff6b6b" stroke-width="2" opacity="0.3"/>
+        <line x1="148" y1="90" x2="167" y2="90" stroke="#ff6b6b" stroke-width="2" opacity="0.3"/>
+        <line x1="276" y1="90" x2="289" y2="90" stroke="#ff6b6b" stroke-width="2" opacity="0.3"/>
+        <line x1="404" y1="90" x2="412" y2="90" stroke="#ff6b6b" stroke-width="2" opacity="0.3"/>
+        <line x1="532" y1="90" x2="557" y2="90" stroke="#ff6b6b" stroke-width="2" opacity="0.3"/>
+        <line x1="660" y1="90" x2="675" y2="90" stroke="#ff6b6b" stroke-width="2" opacity="0.3"/>
+
+        <!-- Row 2: AFTER -->
+        <text x="0" y="200" fill="#e8e9ec" font-weight="500" font-size="13">After</text>
+        <text x="0" y="216" fill="#9aa0aa" font-size="11">scheduled at exact atMs</text>
+        <line x1="20"  y1="180" x2="20"  y2="240" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="148" y1="180" x2="148" y2="240" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="276" y1="180" x2="276" y2="240" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="404" y1="180" x2="404" y2="240" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="532" y1="180" x2="532" y2="240" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="660" y1="180" x2="660" y2="240" stroke="#3a414e" stroke-dasharray="2,4"/>
+        <line x1="20" y1="210" x2="660" y2="210" stroke="#2a2e36"/>
+        <!-- Fire markers (locked to grid) -->
+        <line x1="20"  y1="194" x2="20"  y2="226" stroke="#74e3a5" stroke-width="2"/>
+        <circle cx="20"  cy="210" r="5" fill="#74e3a5"/>
+        <line x1="148" y1="194" x2="148" y2="226" stroke="#74e3a5" stroke-width="2"/>
+        <circle cx="148" cy="210" r="5" fill="#74e3a5"/>
+        <line x1="276" y1="194" x2="276" y2="226" stroke="#74e3a5" stroke-width="2"/>
+        <circle cx="276" cy="210" r="5" fill="#74e3a5"/>
+        <line x1="404" y1="194" x2="404" y2="226" stroke="#74e3a5" stroke-width="2"/>
+        <circle cx="404" cy="210" r="5" fill="#74e3a5"/>
+        <line x1="532" y1="194" x2="532" y2="226" stroke="#74e3a5" stroke-width="2"/>
+        <circle cx="532" cy="210" r="5" fill="#74e3a5"/>
+        <line x1="660" y1="194" x2="660" y2="226" stroke="#74e3a5" stroke-width="2"/>
+        <circle cx="660" cy="210" r="5" fill="#74e3a5"/>
+      </g>
+    </svg>
+    <div class="legend">
+      <span class="k"><span class="swatch" style="background:#7cc4ff"></span>intended chime</span>
+      <span class="k"><span class="swatch" style="background:#ff6b6b"></span>chime fires (before)</span>
+      <span class="k"><span class="swatch" style="background:#74e3a5"></span>chime fires (after)</span>
+    </div>
+    <figcaption>Same six chimes, one second apart. Top: poll-loop
+      jitter bleeds into chime onset. Bottom: chimes locked to the
+      audio clock land sample-accurately.</figcaption>
+  </figure>
+
+  <p>The fix is to stop using the poll loop's clock for audio
+    playback. Both Web Audio and AVAudioEngine accept absolute future
+    timestamps in their own high-precision hardware clock.</p>
+
+  <ul class="list">
+    <li><strong>Web</strong>:
+      <code>source.start(audioStart + sessionMs / 1000)</code> against
+      <code>AudioContext.currentTime</code>.
+      <span class="why">Sample-accurate; the AudioContext clock never
+        pauses.</span></li>
+    <li><strong>Swift</strong>:
+      <code>player.scheduleBuffer(buf, at: AVAudioTime(sampleTime: anchor + …))</code>
+      against the player's render sample-time.
+      <span class="why">Sample-accurate too, but the anchor needs
+        priming and re-anchoring; see iOS resilience below.</span></li>
+  </ul>
+
+  <p>For this to work, the poll loop has to look slightly ahead — the
+    audio engine can only schedule events it's been told about. So the
+    state machine grew the second cursor (<code>tickAudio</code>) that
+    returns events landing within a small lookahead window
+    (150&nbsp;ms on web, 250&nbsp;ms on Swift to clear the slower
+    Timer cadence). Each event the audio path returns is scheduled
+    immediately at its precise <code>atMs</code>; the host holds a
+    cancel handle so pause can flush anything queued past the freeze
+    point.</p>
+
+  <div class="callout">
+    <strong>The poll loop becomes a queue-filler, not a trigger.</strong>
+    Its job narrows from "decide when each chime fires" to "tell the
+    audio engine what's coming next." The hardware clock decides the
+    audible moment.
+  </div>
+
+  <!-- ===================================================================== -->
+  <h2>iOS resilience</h2>
+  <p>The Swift implementation has to handle several failure modes the
+    web doesn't:</p>
+
+  <ul class="list">
+    <li><strong>Anchor capture race.</strong>
+      <code>AVAudioPlayerNode.lastRenderTime</code> is nil until the
+      engine has rendered at least one buffer.
+      <span class="why"><code>prepare()</code> schedules a 64-frame
+        silent priming buffer to force a render. By the time
+        <code>beginSession()</code> reads the anchor, it's reliably
+        populated. A 50&nbsp;ms headroom offset ensures
+        <code>sessionMs=0</code> events schedule comfortably in the
+        future, not in the millisecond-old past.</span></li>
+    <li><strong>Audio session interruptions.</strong> Phone calls,
+      Siri, alarms post
+      <code>AVAudioSession.interruptionNotification</code>.
+      <span class="why">SessionController observes it: <code>.began</code>
+        triggers a forced pause (cancel pending chimes, rewind audio
+        cursor); <code>.ended</code> with <code>.shouldResume</code>
+        triggers a forced resume after re-anchoring against the new
+        effective time.</span></li>
+    <li><strong>Engine reconfigs.</strong> Swapping AirPods or
+      changing output devices fires
+      <code>AVAudioEngineConfigurationChangeNotification</code> and
+      silently stops the engine.
+      <span class="why">The notification handler restarts the engine
+        and re-anchors. The session keeps running; the user sees at
+        most a brief gap.</span></li>
+    <li><strong>Anchor invalidation.</strong>
+      <code>player.stop()</code> resets the sample-time counter to 0,
+      so any flush operation (pause, fadeOut at rest boundary)
+      invalidates the anchor.
+      <span class="why">The next <code>scheduleAt()</code> call lazily
+        re-anchors using the current effective time, so the formula
+        <code>target = anchor + sessionMs * sampleRate / 1000</code>
+        keeps producing correct sample-times even after a full pause
+        cycle.</span></li>
+  </ul>
+
+  <p>The end result: the chime stays in time across a phone call, an
+    AirPods connect, a backgrounded screen lock, and ten minutes of
+    rest-and-active rounds. The metronome locks to the audio clock,
+    and the audio clock keeps running through anything that isn't
+    a hardware reset.</p>
+
+  <footer>
+    <a href="../">← Breathe</a> ·
+    <a href="https://github.com/deshpanderitwik/breathwork-v2">source on GitHub</a>
+  </footer>
+</main>
+</body>
+</html>
