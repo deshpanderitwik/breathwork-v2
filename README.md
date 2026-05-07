@@ -4,6 +4,12 @@ A breathing metronome with rounds. Three surfaces, one breath.
 
 The machine breathes. You fall in.
 
+> when the pulse is true,  
+> the metronome disappears.  
+> when it stumbles,  
+> you start counting.  
+> all the difference, milliseconds.
+
 ## What this is
 
 - **macOS** — menu bar app. Left-click to start a session, right-click for settings.
